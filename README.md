@@ -99,6 +99,6 @@ http://localhost:8080/realtime-demo.html
 - WebSocket endpoint와 topic 흐름 확인
 - 메시지 수신 메서드 구현
 - topic broadcast 연결
-- 테스트 페이지에서 송수신 결과 확인
+- 채팅형 테스트 페이지에서 송수신 결과 확인
 
 이번 시퀀스에서는 채팅방 관리, 메시지 저장, 읽음 처리, 사용자 세션 추적, WebSocket 보안 고급 설정까지 확장하지 않습니다.
