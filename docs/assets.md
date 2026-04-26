@@ -1,33 +1,32 @@
-# 캐시와 Redis 제공 자료 안내
+# 실시간 통신 제공 자료 안내
 
 ## 미리 제공하는 것
 
-- `06-answer` 기준 CRUD, Validation, JWT, OAuth2, SMTP 계정 복구 코드
-- Redis 의존성 추가 자리
-- Redis host/port, TTL 설정 자리
+- `07-answer` 기준 CRUD, 인증, 캐시 관련 코드
+- WebSocket/STOMP 의존성 추가 자리
+- 테스트용 HTML 페이지 뼈대
+- 기본 보안 설정과 패키지 구조
 - MySQL + Redis 실행용 `compose.yaml`
-- `PostController`와 `PostService` 기본 구조
 - Swagger와 테스트 실행 환경
 
 ## 왜 미리 제공하는가
 
-- 이번 시퀀스의 핵심은 기존 조회 흐름 위에 캐시 레이어를 얹는 것입니다.
-- Redis 설치나 복잡한 설정 설명보다 cache-aside 흐름 자체를 손으로 연결하는 편이 학습 효과가 큽니다.
-- 학생이 hit/miss와 TTL에 집중할 수 있게 실행 환경은 미리 맞춰둡니다.
+- 이번 시퀀스의 핵심은 실시간 연결 자체를 처음 붙여보는 것입니다.
+- 복잡한 환경 설정보다 메시지 수신과 broadcast 흐름을 직접 연결하는 데 시간을 쓰는 편이 더 학습 효과가 큽니다.
+- 학생이 endpoint, topic, 테스트 페이지 흐름에 집중할 수 있게 기반 환경은 미리 맞춰둡니다.
 
 ## 학생이 직접 작성하는 것
 
-- Redis 템플릿 Bean 흐름 확인
-- 캐시 조회 메서드 완성
-- 캐시 저장 메서드와 TTL 연결
-- miss -> DB 조회 -> 캐시 저장 흐름 연결
-- 같은 요청을 두 번 보내며 hit/miss 확인
+- 메시지 DTO 구조 확인
+- 메시지 수신 메서드 구현
+- topic broadcast 연결
+- 테스트 페이지에서 connect/send/receive 확인
 
 ## 이번 시퀀스에서 직접 작성하지 않는 범위
 
-- pub/sub
-- stream
-- distributed lock
-- 세션 저장
-- 토큰 블랙리스트
-- 복잡한 캐시 무효화 전략
+- 채팅방 관리
+- 메시지 저장
+- 읽음 처리
+- 사용자 세션 추적
+- WebSocket 인증/보안 고급 설정
+- broker relay 같은 고급 주제

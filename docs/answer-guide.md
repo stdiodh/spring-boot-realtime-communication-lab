@@ -1,102 +1,110 @@
-# 캐시와 Redis 정답 가이드
+# 실시간 통신 정답 가이드
 
 ## 정답을 보기 전에 먼저 확인할 것
 
-- `StringRedisTemplate` Bean이 준비되어 있는가
-- `PostCacheService.get(...)`가 miss일 때 `null`을 반환하는가
-- `PostCacheService.set(...)`가 TTL과 함께 값을 저장하는가
-- `PostQueryService.getPost(...)`가 hit/miss 분기를 올바르게 연결하는가
+- `ChatMessage`에 sender와 content가 담기는가
+- `WebSocketConfig`에서 endpoint와 topic 설정이 보이는가
+- `WebSocketController`가 메시지를 받고 다시 topic으로 보내는가
+- 테스트 페이지에서 connect -> send -> receive가 실제로 보이는가
 
-## 1. Redis 연결 정답 포인트
+## 1. 메시지 DTO 정답 포인트
 
-- 이번 시퀀스는 `StringRedisTemplate` 하나로 충분합니다.
-- 복잡한 자료구조보다 문자열 저장/조회 흐름이 잘 보이는 것이 중요합니다.
+- 이번 시퀀스는 최소 메시지 구조만 있으면 충분합니다.
+- sender와 content 두 필드만 있어도 실시간 흐름을 이해할 수 있습니다.
 
 예시 형태:
 
 ```kotlin
-@Bean
-fun stringRedisTemplate(connectionFactory: RedisConnectionFactory): StringRedisTemplate {
-    return StringRedisTemplate(connectionFactory)
-}
+data class ChatMessage(
+    val sender: String,
+    val content: String
+)
 ```
 
-## 2. 캐시 조회 정답 포인트
+## 2. 메시지 수신 메서드 정답 포인트
 
 정답 흐름은 아래 순서입니다.
 
-1. `postId`로 키를 만듭니다.
-2. Redis에서 문자열 값을 조회합니다.
-3. 값이 없으면 `null`을 반환합니다.
-4. 값이 있으면 `PostResponse`로 되돌립니다.
+1. `@MessageMapping("/chat.send")`로 클라이언트 전송 경로를 연결합니다.
+2. `ChatMessage`를 파라미터로 받습니다.
+3. `@SendTo("/topic/chat")`로 다시 보낼 topic을 연결합니다.
+4. 받은 메시지를 반환합니다.
 
 예시 핵심:
 
 ```kotlin
-val value = stringRedisTemplate.opsForValue().get(key(postId)) ?: return null
-return objectMapper.readValue(value, PostResponse::class.java)
+@MessageMapping("/chat.send")
+@SendTo("/topic/chat")
+fun send(message: ChatMessage): ChatMessage {
+    return message
+}
 ```
 
-## 3. miss -> DB 조회 -> 캐시 저장 정답 포인트
+## 3. WebSocket 설정 정답 포인트
 
 정답 흐름은 아래 순서입니다.
 
-1. `postCacheService.get(id)`를 먼저 호출합니다.
-2. 값이 있으면 바로 반환합니다.
-3. 값이 없으면 `postService.getById(id)`로 DB를 조회합니다.
-4. 조회 결과를 `postCacheService.set(id, response)`로 저장합니다.
-5. 마지막에 응답을 반환합니다.
+1. simple broker를 `/topic`으로 엽니다.
+2. application destination prefix를 `/app`으로 둡니다.
+3. endpoint를 `/ws-chat`으로 엽니다.
+4. 테스트 페이지에서 쉽게 연결할 수 있게 SockJS를 붙입니다.
 
 예시 핵심:
 
 ```kotlin
-val cached = postCacheService.get(id)
-if (cached != null) {
-    logger.info("cache hit for post {}", id)
-    return cached
+override fun configureMessageBroker(registry: MessageBrokerRegistry) {
+    registry.enableSimpleBroker("/topic")
+    registry.setApplicationDestinationPrefixes("/app")
 }
 
-logger.info("cache miss for post {}", id)
-val response = postService.getById(id)
-postCacheService.set(id, response)
-return response
+override fun registerStompEndpoints(registry: StompEndpointRegistry) {
+    registry.addEndpoint("/ws-chat").setAllowedOriginPatterns("*").withSockJS()
+}
 ```
 
-## 4. TTL 설정 정답 포인트
+## 4. 테스트 페이지 연결 흐름
 
-- TTL은 `cache.post-ttl-seconds` 설정값으로 관리합니다.
-- 저장 시 `opsForValue().set(key, value, ttl())` 형태로 연결하면 됩니다.
+1. 브라우저가 `/ws-chat`에 연결합니다.
+2. `/topic/chat`을 구독합니다.
+3. 버튼 클릭 시 `/app/chat.send`로 메시지를 보냅니다.
+4. 서버가 다시 `/topic/chat`으로 메시지를 보냅니다.
+5. 브라우저가 메시지를 받아 로그에 출력합니다.
 
-예시 핵심:
+## 5. 메시지 전송/수신 확인 예시
 
-```kotlin
-stringRedisTemplate.opsForValue().set(key(postId), value, ttl())
-```
+- sender: `andi`
+- content: `실시간 테스트`
 
-## 5. hit/miss 확인 방법
+이 값을 보낸 뒤 페이지 로그에
+`andi: 실시간 테스트`
+형태가 바로 보이면 성공입니다.
 
-1. 게시글을 생성합니다.
-2. 처음 `GET /posts/{id}`를 호출합니다.
-   - 보통 miss -> DB 조회 -> 캐시 저장입니다.
-3. 같은 요청을 다시 호출합니다.
-   - 보통 hit -> 캐시 응답입니다.
-4. TTL이 지난 뒤 다시 호출하면 miss가 다시 일어날 수 있습니다.
+## 6. 학생이 자주 틀리는 포인트
 
-## 6. 강사용 빠른 비교 포인트
+- endpoint와 topic 경로를 같은 것으로 생각하는 경우
+- `@MessageMapping`만 붙이고 `@SendTo`를 빠뜨리는 경우
+- 메시지를 DB에 저장하는 흐름까지 한 번에 넣으려는 경우
+- HTTP controller와 WebSocket controller 역할을 섞어 생각하는 경우
 
-- miss를 예외로 처리하지 않았는지
-- key 생성이 단순하고 읽기 쉬운지
-- TTL이 설정과 코드에서 함께 보이는지
-- `PostQueryService`에서 cache-aside 흐름이 짧고 선명하게 보이는지
+## 7. 왜 HTTP만으로는 불편한가
 
-## 7. answer 기준 완성 형태
+HTTP는 보통 요청이 먼저 와야 응답을 줄 수 있습니다.
+반면 실시간 기능은 연결을 유지한 상태에서
+서버가 다시 메시지를 밀어줄 수 있어야 더 자연스럽습니다.
 
-`07-answer`에서는 아래 파일이 완성되어 있습니다.
+## 8. 왜 연결 유지가 필요한가
 
-- `src/main/kotlin/com/andi/rest_crud/config/RedisConfig.kt`
-- `src/main/kotlin/com/andi/rest_crud/service/PostCacheService.kt`
-- `src/main/kotlin/com/andi/rest_crud/service/PostQueryService.kt`
-- `src/main/kotlin/com/andi/rest_crud/controller/PostController.kt`
+채팅이나 알림처럼 즉시 반응이 필요한 기능에서는
+요청을 매번 새로 열기보다 연결을 유지한 채 메시지를 주고받는 편이 흐름이 더 자연스럽습니다.
 
-핵심은 Redis 기능을 많이 넣는 것이 아니라,
-조회 1개 흐름에 cache-aside를 가장 단순하게 붙여보는 것입니다.
+## 9. answer 기준 완성 형태
+
+`08-answer`에서는 아래 파일이 완성되어 있습니다.
+
+- `src/main/kotlin/com/andi/rest_crud/dto/ChatMessage.kt`
+- `src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt`
+- `src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt`
+- `src/main/resources/static/realtime-demo.html`
+
+핵심은 실시간 통신 전체를 깊게 넣는 것이 아니라,
+메시지를 받고 다시 뿌리는 가장 단순한 흐름을 한 번 손으로 경험하는 것입니다.

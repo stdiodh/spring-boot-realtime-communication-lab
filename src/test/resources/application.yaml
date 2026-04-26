@@ -40,7 +40,7 @@ jwt:
   expiration-ms: 3600000
 
 app:
-  frontend-url: "http://localhost:8080/auth-demo.html"
+  frontend-url: "http://localhost:8080/realtime-demo.html"
   password-reset-url: "http://localhost:8080/auth-demo.html"
 
 cache:

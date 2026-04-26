@@ -1,204 +1,200 @@
-# 캐시와 Redis 이론 정리
+# 실시간 통신 이론 정리
 
-> 자주 조회되는 데이터를 DB보다 더 빠르게 다시 가져오기 위해 캐시를 앞에 두는 흐름을 익히는 문서입니다.
+> 요청이 들어와야만 응답하는 HTTP 흐름을 넘어, 연결을 유지한 채 서버가 다시 메시지를 밀어줄 수 있는 감각을 익히는 문서입니다.
 
 > 이번 주차 한 줄 요약  
-> 게시글 조회 앞에 Redis 캐시를 붙여서 cache hit와 miss, TTL의 의미를 직접 확인하는 단계입니다.
+> WebSocket과 STOMP를 이용해 메시지를 받고 topic으로 다시 뿌리는 가장 단순한 실시간 흐름을 확인하는 단계입니다.
 
 ## 먼저 이것만 기억해도 됩니다
 
-- DB와 캐시는 역할이 다릅니다.
-- cache miss는 실패가 아니라 정상 흐름입니다.
-- TTL이 있어야 캐시를 영구 저장소처럼 오해하지 않게 됩니다.
+- HTTP와 WebSocket은 통신 방식이 다릅니다.
+- 실시간 기능에서는 서버가 다시 메시지를 보내는 흐름이 중요합니다.
+- 이번 시퀀스의 핵심은 메시지 수신 -> broadcast -> 수신 확인입니다.
 
 ## 이 주제를 왜 배우는가
 
-기능이 늘어나면 저장만 중요한 것이 아니라 조회 속도도 신경 쓰이기 시작합니다.
-특히 같은 데이터를 자주 읽는 상황에서는 매번 DB만 보는 구조가 점점 부담이 될 수 있습니다.
+지금까지 만든 기능은 대부분 HTTP 요청이 들어오면 그때 응답하는 구조였습니다.
+이 구조는 CRUD나 인증 같은 흐름에는 잘 맞지만,
+채팅이나 알림처럼 "서버가 바로 다시 알려줘야 하는 기능"에는 불편할 수 있습니다.
 
-그래서 이번 실습에서는 Redis를 이용해
-"먼저 캐시를 보고, 없으면 DB를 보고, 다시 캐시에 저장하는" 가장 단순한 흐름을 붙여봅니다.
-이 감각을 잡아야 나중에 실시간 통신이나 더 큰 트래픽 주제에서도
-"어디서 병목이 생길 수 있는가"를 자연스럽게 떠올릴 수 있습니다.
+그래서 이번 실습에서는 WebSocket 기반 연결을 아주 작게 붙여서,
+"클라이언트가 보낸 메시지를 서버가 다시 topic으로 뿌리고, 연결된 화면이 바로 받는 흐름"을 경험해봅니다.
+이 감각이 있어야 다음 운영 환경이나 확장 주제에서도 실시간 요구사항을 더 잘 이해할 수 있습니다.
 
 ## 이번 실습 흐름을 먼저 한눈에 보기
 
-1. 클라이언트가 `GET /posts/{id}` 요청을 보냅니다.
-2. `PostQueryService`가 먼저 Redis 캐시를 조회합니다.
-3. 캐시에 있으면 바로 응답합니다.
-4. 캐시에 없으면 `PostService`로 DB를 조회합니다.
-5. 조회 결과를 Redis에 저장합니다.
-6. 다음 같은 요청에서는 cache hit가 일어납니다.
+1. 브라우저가 WebSocket endpoint에 연결합니다.
+2. 클라이언트가 메시지를 `/app/chat.send`로 보냅니다.
+3. 서버가 메시지를 받습니다.
+4. 서버가 `/topic/chat`으로 다시 메시지를 보냅니다.
+5. 구독 중인 클라이언트가 메시지를 바로 화면에 표시합니다.
 
 짧게 말하면 이번 실습은  
-**요청 -> 캐시 조회 -> miss면 DB 조회 -> 캐시 저장 -> 응답** 흐름을 익히는 과정입니다.
+**연결 -> 메시지 전송 -> 서버 수신 -> topic broadcast -> 실시간 수신** 흐름을 익히는 과정입니다.
 
 > 한 줄로 다시 보기  
-> DB 앞에 빠른 보조 저장소를 하나 두고 조회 흐름을 가볍게 만드는 입문 실습입니다.
+> 요청 한 번으로 끝나는 통신이 아니라, 연결을 유지한 채 서버와 클라이언트가 계속 메시지를 주고받는 첫 실습입니다.
 
 ## 오늘 꼭 잡아야 할 질문
 
-- 왜 자주 조회되는 데이터에 캐시를 붙이나요?
-- cache hit와 miss는 무엇이 다른가요?
-- TTL은 왜 필요한가요?
-- 이번 코드에서 캐시 흐름이 가장 잘 보이는 클래스는 무엇인가요?
-- 다음 주제로 넘어가기 전에 어떤 차이를 설명할 수 있어야 하나요?
+- HTTP와 WebSocket은 어떤 점이 다른가요?
+- 서버가 다시 메시지를 보낼 수 있는 이유는 무엇인가요?
+- 메시지 DTO는 왜 필요한가요?
+- 이번 코드에서 실시간 흐름이 가장 잘 보이는 클래스는 무엇인가요?
+- 채팅이나 알림에서 왜 이런 구조가 필요한가요?
 
 ## 중요한 코드 먼저 보기
 
-### 1. 캐시를 먼저 보는 코드
+### 1. 메시지를 받아 다시 보내는 코드
 
 ```kotlin
-fun getPost(id: Long): PostResponse {
-    val cached = postCacheService.get(id)
-    if (cached != null) {
-        logger.info("cache hit for post {}", id)
-        return cached
-    }
-
-    logger.info("cache miss for post {}", id)
-    val response = postService.getById(id)
-    postCacheService.set(id, response)
-    return response
+@MessageMapping("/chat.send")
+@SendTo("/topic/chat")
+fun send(message: ChatMessage): ChatMessage {
+    return message
+    // 받은 메시지를 그대로 topic으로 다시 보냅니다.
 }
 ```
 
-- 이 코드는 **cache-aside 흐름의 핵심**을 보여줍니다.
-- 여기서는 특히 hit 분기와 miss 뒤 저장 흐름을 먼저 보세요.
-- 학생이 기억해야 할 핵심은 **"miss는 DB 조회로 자연스럽게 이어진다"**는 점입니다.
-- 파일: `src/main/kotlin/com/andi/rest_crud/service/PostQueryService.kt`
+- 이 코드는 **실시간 흐름의 핵심**을 보여줍니다.
+- 여기서는 특히 `@MessageMapping`과 `@SendTo`를 먼저 보세요.
+- 학생이 기억해야 할 핵심은 **"서버가 받은 메시지를 다시 연결된 클라이언트들에게 뿌릴 수 있다"**는 점입니다.
+- 파일: `src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt`
 
-### 2. 캐시에 저장할 때 TTL을 함께 두는 코드
+### 2. WebSocket endpoint와 broker를 여는 코드
 
 ```kotlin
-fun set(postId: Long, response: PostResponse) {
-    val value = objectMapper.writeValueAsString(response)
-    stringRedisTemplate.opsForValue().set(key(postId), value, ttl())
+override fun configureMessageBroker(registry: MessageBrokerRegistry) {
+    registry.enableSimpleBroker("/topic")
+    registry.setApplicationDestinationPrefixes("/app")
+}
+
+override fun registerStompEndpoints(registry: StompEndpointRegistry) {
+    registry.addEndpoint("/ws-chat").setAllowedOriginPatterns("*").withSockJS()
 }
 ```
 
-- 이 코드는 **캐시 저장과 TTL 설정**을 보여줍니다.
-- 학생이 기억해야 할 핵심은 **"캐시는 저장만이 아니라 만료 시간도 같이 생각해야 한다"**는 점입니다.
-- 파일: `src/main/kotlin/com/andi/rest_crud/service/PostCacheService.kt`
+- 이 코드는 **어디로 연결하고, 어디로 다시 보낼지**를 보여줍니다.
+- 학생이 기억해야 할 핵심은 **"클라이언트가 보낼 경로와 구독할 경로가 다르다"**는 점입니다.
+- 파일: `src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt`
 
-### 3. Redis 연결 Bean을 준비하는 코드
+### 3. 테스트 페이지에서 실시간 수신을 확인하는 코드
 
-```kotlin
-@Bean
-fun stringRedisTemplate(connectionFactory: RedisConnectionFactory): StringRedisTemplate {
-    return StringRedisTemplate(connectionFactory)
-}
+```javascript
+stompClient.subscribe("/topic/chat", (frame) => {
+  const message = JSON.parse(frame.body);
+  appendMessage(`${message.sender}: ${message.content}`);
+});
 ```
 
-- 이 코드는 **애플리케이션과 Redis가 만나는 시작점**을 보여줍니다.
-- 학생이 기억해야 할 핵심은 **"이번 시퀀스는 복잡한 Redis 자료구조보다 조회 캐시 흐름이 중심"**이라는 점입니다.
-- 파일: `src/main/kotlin/com/andi/rest_crud/config/RedisConfig.kt`
+- 이 코드는 **브라우저가 topic 메시지를 받는 지점**을 보여줍니다.
+- 학생이 기억해야 할 핵심은 **"구독 중이면 서버가 다시 보낸 메시지를 바로 받을 수 있다"**는 점입니다.
+- 파일: `src/main/resources/static/realtime-demo.html`
 
 ## 핵심 용어를 쉬운 말로 정리하기
 
-### 캐시
+### HTTP
 
 - **뜻**  
-  자주 다시 쓰는 데이터를 더 빠르게 꺼내기 위해 잠깐 보관해두는 저장소입니다.
+  요청이 오면 그때 응답을 돌려주는 가장 익숙한 웹 통신 방식입니다.
 - **왜 중요한가**  
-  매번 DB까지 가지 않아도 되는 상황을 만들 수 있습니다.
+  지금까지 대부분의 API가 이 방식으로 동작했습니다.
 - **이번 코드에서는 어디에 보이는가**  
-  `PostCacheService`에서 볼 수 있습니다.
+  `PostController`, `AuthController` 같은 REST API에서 볼 수 있습니다.
 - **짧은 상황 예시**  
-  같은 게시글 상세 조회를 연속으로 요청할 때 두 번째 조회를 더 가볍게 만들 수 있습니다.
+  게시글 조회는 요청을 보내야만 서버가 응답합니다.
 
-### DB와 캐시 차이
+### WebSocket
 
 - **뜻**  
-  DB는 기준 데이터 저장소이고, 캐시는 빠른 재조회용 보조 저장소입니다.
+  연결을 유지한 채 클라이언트와 서버가 계속 메시지를 주고받을 수 있는 통신 방식입니다.
 - **왜 중요한가**  
-  둘을 같은 것으로 생각하면 TTL이나 miss 흐름을 이해하기 어렵습니다.
+  실시간 기능에서는 요청-응답 한 번으로 끝나지 않는 흐름이 필요합니다.
 - **이번 코드에서는 어디에 보이는가**  
-  `PostService.getById(...)`는 DB 조회, `PostCacheService.get(...)`는 캐시 조회입니다.
+  `WebSocketConfig`의 endpoint 설정에서 볼 수 있습니다.
 - **짧은 상황 예시**  
-  캐시에 없으면 다시 DB로 가는 이유가 바로 이 차이 때문입니다.
+  채팅창에 메시지를 보내고, 바로 다시 수신하는 흐름이 여기에 가깝습니다.
 
-### cache hit
+### 연결 유지
 
 - **뜻**  
-  캐시에 이미 값이 있어서 DB를 보지 않고 바로 응답하는 상황입니다.
+  요청이 끝나도 연결을 끊지 않고 계속 유지하는 상태입니다.
 - **왜 중요한가**  
-  캐시를 붙이는 이유가 가장 잘 드러나는 순간입니다.
+  서버가 나중에 다시 메시지를 보낼 수 있는 기반이 됩니다.
 - **이번 코드에서는 어디에 보이는가**  
-  `cached != null` 분기에서 볼 수 있습니다.
+  브라우저가 `/ws-chat`에 연결한 뒤 구독을 유지하는 흐름에서 볼 수 있습니다.
 - **짧은 상황 예시**  
-  같은 게시글을 두 번째 조회했을 때 Redis에서 바로 값을 꺼내는 상황입니다.
+  한 번 연결한 뒤 여러 메시지를 계속 주고받을 수 있습니다.
 
-### cache miss
+### 메시지 DTO
 
 - **뜻**  
-  캐시에 값이 없어서 DB 조회로 이어지는 상황입니다.
+  실시간으로 주고받는 데이터 구조를 담는 객체입니다.
 - **왜 중요한가**  
-  miss를 실패로 오해하지 않아야 cache-aside 흐름이 자연스럽게 보입니다.
+  sender, content 같은 필요한 값만 명확하게 주고받을 수 있습니다.
 - **이번 코드에서는 어디에 보이는가**  
-  `PostQueryService.getPost(...)`에서 `postService.getById(...)`로 이어지는 분기입니다.
+  `ChatMessage.kt`에서 볼 수 있습니다.
 - **짧은 상황 예시**  
-  처음 게시글을 조회할 때 캐시에 값이 없어서 DB를 보는 상황입니다.
+  누가 어떤 메시지를 보냈는지 한 번에 표현할 수 있습니다.
 
-### TTL
+### topic broadcast
 
 - **뜻**  
-  캐시 데이터가 얼마나 오래 살아 있을지를 정하는 시간입니다.
+  특정 topic을 구독 중인 모든 클라이언트에게 같은 메시지를 다시 보내는 흐름입니다.
 - **왜 중요한가**  
-  캐시를 영구 저장소처럼 쓰지 않게 도와줍니다.
+  채팅이나 알림처럼 여러 화면이 동시에 같은 이벤트를 받아야 할 때 유용합니다.
 - **이번 코드에서는 어디에 보이는가**  
-  `cache.post-ttl-seconds` 설정과 `ttl()` 메서드에서 볼 수 있습니다.
+  `@SendTo("/topic/chat")`에서 볼 수 있습니다.
 - **짧은 상황 예시**  
-  TTL이 지나면 다시 miss가 일어나고 DB 조회가 다시 필요할 수 있습니다.
+  한 브라우저가 보낸 메시지를 다른 브라우저도 동시에 받습니다.
 
-### Redis
+### 실시간 통신
 
 - **뜻**  
-  메모리 기반으로 빠르게 데이터를 저장하고 조회할 수 있는 저장소입니다.
+  서버와 클라이언트가 이벤트를 거의 바로 주고받는 통신 흐름입니다.
 - **왜 중요한가**  
-  이번 시퀀스에서는 캐시를 구현하는 가장 단순한 도구로 사용합니다.
+  즉각적인 반응이 중요한 기능에서 사용자 경험 차이가 큽니다.
 - **이번 코드에서는 어디에 보이는가**  
-  `StringRedisTemplate`, `spring.data.redis.*` 설정에서 볼 수 있습니다.
+  `realtime-demo.html`에서 send 후 바로 메시지가 돌아오는 흐름입니다.
 - **짧은 상황 예시**  
-  게시글 상세 조회 결과를 문자열로 Redis에 잠깐 저장해 둡니다.
+  채팅, 알림, 라이브 상태 표시 같은 기능에서 자주 쓰입니다.
 
 ## 이번 실습에서 꼭 보면 좋은 포인트
 
-- `PostController`가 단건 조회를 `PostQueryService`로 넘기는 이유
-- miss일 때 예외가 아니라 자연스럽게 DB 조회로 이어지는 분기
-- 캐시에 `PostResponse`를 그대로 두지 않고 문자열로 저장하는 이유
-- TTL 값을 너무 길게 잡지 않고 짧게 두는 이유
+- REST controller와 WebSocket controller가 역할이 어떻게 다른지
+- `/app/chat.send`와 `/topic/chat`이 각각 무엇을 뜻하는지
+- 서버가 받은 메시지를 그대로 다시 보내도 실시간 흐름이 성립한다는 점
+- 테스트 페이지에서 connect, subscribe, send가 어떤 순서로 일어나는지
 
 ## 자주 헷갈리는 포인트
 
-- 캐시는 DB를 대체하는 것이 아닙니다.
-- cache miss는 오류가 아니라 정상적인 첫 조회 흐름입니다.
-- 이번 시퀀스는 Redis 전체 기능을 배우는 단계가 아닙니다.
-- TTL이 없으면 캐시를 영구 저장처럼 오해하기 쉽습니다.
+- 이번 시퀀스는 WebSocket 프로토콜 전체를 깊게 배우는 단계가 아닙니다.
+- 메시지를 DB에 저장하지 않아도 실시간 흐름은 충분히 볼 수 있습니다.
+- topic broadcast는 HTTP 응답과 다르게 연결된 여러 클라이언트가 같이 받을 수 있습니다.
+- 채팅방이나 읽음 처리까지 넣지 않아도 실시간 통신의 핵심은 이해할 수 있습니다.
 
 ## 직접 말해보기
 
-- 왜 자주 조회되는 데이터에 캐시를 붙이면 좋을까요?
-- cache hit와 miss는 각각 어떤 상황인가요?
-- DB와 캐시는 역할이 어떻게 다른가요?
-- TTL이 없으면 어떤 오해나 문제가 생길 수 있나요?
+- HTTP와 WebSocket은 어떤 점이 다른가요?
+- 서버가 다시 메시지를 보낼 수 있는 이유는 무엇인가요?
+- 메시지 DTO는 왜 필요한가요?
+- `/app/chat.send`와 `/topic/chat`은 각각 어떤 역할인가요?
 
 ## 복습 체크리스트
 
-- [ ] DB와 캐시의 차이를 설명할 수 있습니다.
-- [ ] cache hit와 miss를 각각 말할 수 있습니다.
-- [ ] 캐시에 없으면 DB 조회로 이어진다는 흐름을 설명할 수 있습니다.
-- [ ] TTL이 왜 필요한지 설명할 수 있습니다.
-- [ ] 이번 실습에서 Redis가 어떤 역할을 맡는지 설명할 수 있습니다.
+- [ ] HTTP와 WebSocket의 차이를 설명할 수 있습니다.
+- [ ] 메시지 DTO 역할을 설명할 수 있습니다.
+- [ ] 서버가 받은 메시지를 topic으로 다시 보내는 흐름을 말할 수 있습니다.
+- [ ] 테스트 페이지에서 메시지를 보내고 다시 받는 과정을 설명할 수 있습니다.
+- [ ] 채팅/알림에서 왜 이런 구조가 필요한지 말할 수 있습니다.
 
 ## 오늘 꼭 기억할 것
 
-이번 시퀀스의 핵심은 Redis 기능을 많이 배우는 것이 아닙니다.
-대신 "자주 조회되는 데이터를 더 빠르게 다시 꺼내기 위해 캐시를 어떻게 앞에 두는가"를
-가장 단순한 흐름으로 이해하는 것입니다.
+이번 시퀀스의 핵심은 WebSocket 기능을 많이 외우는 것이 아닙니다.
+대신 "요청이 와야만 응답하는 구조를 넘어, 연결을 유지한 채 서버가 다시 메시지를 밀어줄 수 있다"는 감각을 잡는 것입니다.
 
 ## 다음 실습과 연결하기
 
-다음 시퀀스에서 실시간 통신으로 넘어가면,
-데이터가 더 자주 오가고 응답 흐름이 더 즉각적으로 느껴져야 하는 순간이 많아집니다.
-그래서 이번 캐시 시퀀스는 "속도와 흐름을 어떻게 보조할 것인가"를 생각하기 시작하는 첫 단계입니다.
+다음 시퀀스에서 배포와 운영 환경으로 넘어가면,
+이런 실시간 연결이 실제 서버 환경에서 어떻게 유지되고 관찰되는지도 중요해집니다.
+그래서 이번 실습은 운영 전 단계에서 실시간 흐름을 한 번 손으로 붙여보는 준비 단계입니다.
