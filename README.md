@@ -1,106 +1,72 @@
-# Spring Boot Redis Cache Lab
+# Spring Boot Realtime Communication Lab
 
-> Redis를 이용해 가장 단순한 조회 캐시 흐름을 붙여보는 실습 레포입니다.
+이 레포는 A&I 백엔드 커리큘럼 중
+`08. 실시간 통신` 시퀀스를 담는 토픽 레포입니다.
 
-## 이 시퀀스에서 무엇을 배우나요
+`main` 브랜치는 학생이 바로 실습하는 브랜치가 아니라,
+이 레포가 어떤 주제를 담고 있고 어떤 브랜치에서 수업을 진행해야 하는지 안내하는 대표 브랜치입니다.
 
-이번 실습은 `06-answer`까지 만든 조회 흐름 위에
-Redis 기반 cache-aside 패턴을 붙이는 단계입니다.
+## 이 레포가 다루는 내용
 
-이번 레포에서는 아래 흐름에 집중합니다.
+- `08`: WebSocket/STOMP 기반 실시간 메시지 흐름
+- HTTP와 WebSocket 차이
+- 메시지 수신 -> topic broadcast -> 실시간 수신
+- 테스트 페이지 기반 실시간 확인
 
-1. 먼저 캐시를 조회합니다.
-2. 캐시에 없으면 DB를 조회합니다.
-3. DB 조회 결과를 캐시에 저장합니다.
-4. 다음 조회에서 cache hit가 일어나는지 확인합니다.
-5. TTL로 캐시가 영구 저장소가 아니라는 점을 이해합니다.
+즉 이 레포는 "요청이 와야 응답하는 흐름을 넘어, 연결을 유지한 채 서버가 다시 메시지를 보낼 수 있다"는 실시간 통신 입문 주제를 다루는 실습 레포입니다.
 
 ## 브랜치 사용 방법
 
-- `main`: 이 레포의 주제, 문서, 브랜치 구조를 안내하는 대표 브랜치
-- `07-implementation`: 학생 실습용 starter 브랜치
-- `07-answer`: 비교용 정답 브랜치
+- `main`: 레포 소개와 브랜치 안내
+- `08-implementation`, `08-answer`
 
-학생은 반드시 `07-implementation`에서 시작합니다.
+학생은 항상 `08-implementation`에서 시작하고,
+강사는 `08-answer`에서 비교합니다.
 
-```bash
-git clone -b 07-implementation https://github.com/stdiodh/spring-boot-redis-cache-lab.git
-cd spring-boot-redis-cache-lab
-git checkout -b feat/<이름>
-```
-
-정답 비교가 필요할 때는 아래 흐름을 사용합니다.
+예:
 
 ```bash
-git fetch origin
-git diff origin/07-implementation..origin/07-answer
+git clone -b 08-implementation https://github.com/stdiodh/spring-boot-realtime-communication-lab.git
+cd spring-boot-realtime-communication-lab
 ```
 
 ## 문서 안내
 
-- [이론 문서](./docs/theory.md)
-- [구현 안내](./docs/implementation.md)
-- [정답 가이드](./docs/answer-guide.md)
-- [체크리스트](./docs/checklist.md)
-- [제공 자료 안내](./docs/assets.md)
+- [레포 가이드](./docs/repo-guide.md)
+- [브랜치 가이드](./docs/branch-guide.md)
+- [시퀀스 맵](./docs/sequence-map.md)
 
-## 파일을 어떻게 보면 좋나요
+각 시퀀스의 실제 실습 문서는 해당 브랜치 안에서 확인합니다.
 
-1. `docs/theory.md`에서 왜 DB 앞에 캐시를 두는지 읽습니다.
-2. `docs/implementation.md`에서 오늘 손으로 칠 순서를 확인합니다.
-3. 아래 핵심 파일을 순서대로 엽니다.
+예:
+- `08-implementation`의 `docs/theory.md`, `docs/implementation.md`
+- `08-answer`의 `docs/answer-guide.md`
 
-- `src/main/kotlin/com/andi/rest_crud/config/RedisConfig.kt`
-- `src/main/kotlin/com/andi/rest_crud/service/PostCacheService.kt`
-- `src/main/kotlin/com/andi/rest_crud/service/PostQueryService.kt`
-- `src/main/kotlin/com/andi/rest_crud/controller/PostController.kt`
+## 실행 기준
 
-`07-answer`는 완성된 비교용 기준 브랜치입니다.
-학생 구현과 비교할 때는 `docs/answer-guide.md`와 함께 보면 좋습니다.
+- 앱 런타임 DB: MySQL
+- 캐시 저장소: Redis
+- 테스트 DB: H2 in-memory
+- 실시간 endpoint: `/ws-chat`
+- 테스트 페이지 경로: `http://localhost:8080/realtime-demo.html`
 
-## 미리 제공되는 것
+MySQL과 Redis가 필요할 때는 각 시퀀스 브랜치의 `compose.yaml`을 사용합니다.
 
-- `06-answer` 기준 CRUD, Validation, JWT, OAuth2, SMTP 계정 복구 코드
-- Redis 의존성 설정
-- MySQL + Redis 실행용 `compose.yaml`
-- Redis host/port, TTL 설정 자리
-- `PostController`와 `PostService` 기본 조회 구조
+## 현재 정리 상태
 
-학생은 캐시 조회와 저장의 핵심 흐름만 직접 구현합니다.
+| Sequence | Starter | Answer | Status |
+| --- | --- | --- | --- |
+| 08 | `08-implementation` | `08-answer` | Ready |
 
-## 실행 방법
+## 이 레포를 어떻게 보면 좋나요
 
-먼저 MySQL과 Redis를 준비합니다.
+1. 먼저 `main`에서 이 README와 `docs/branch-guide.md`를 읽습니다.
+2. `08-implementation` 브랜치로 이동합니다.
+3. 그 브랜치의 `README.md`, `docs/theory.md`, `docs/implementation.md` 순서로 봅니다.
+4. 실습 후 `08-answer` 브랜치와 비교합니다.
 
-```bash
-docker compose up -d
-```
+## 운영 메모
 
-애플리케이션 실행:
-
-```bash
-./gradlew bootRun
-```
-
-Swagger UI:
-
-```text
-http://localhost:8080/swagger
-```
-
-테스트 실행:
-
-```bash
-./gradlew test
-```
-
-## 이번 실습에서 직접 구현할 범위
-
-- Redis 연결용 `StringRedisTemplate` Bean 확인
-- `postId` 기준 캐시 조회
-- cache miss 시 DB 조회 연결
-- DB 조회 결과 캐시 저장
-- TTL 설정
-- 같은 조회를 두 번 호출하며 hit/miss 차이 확인
-
-이번 시퀀스에서는 pub/sub, stream, distributed lock, 세션 저장, 토큰 블랙리스트, 복잡한 캐시 무효화 전략까지 확장하지 않습니다.
+- 이 레포는 `spring-boot-redis-cache-lab`의 `07-answer` 다음 단계에서 분리된 새 토픽 레포입니다.
+- 이 레포의 `main` 브랜치는 실습 완료본이 아니라 안내 브랜치입니다.
+- 시퀀스 문서는 각 브랜치 안에서 계속 바뀌어야 하며, 이전 시퀀스 문서를 그대로 재사용하면 안 됩니다.
