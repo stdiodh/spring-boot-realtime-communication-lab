@@ -1,6 +1,6 @@
 # Spring Boot Realtime Communication Lab
 
-> WebSocket과 STOMP로 가장 단순한 실시간 메시지 흐름을 붙여보는 실습 레포입니다.
+WebSocket과 STOMP로 가장 단순한 실시간 메시지 흐름을 붙여보는 실습 레포입니다.
 
 ## 이 시퀀스에서 무엇을 배우나요
 
