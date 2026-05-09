@@ -17,10 +17,10 @@ WebSocket과 STOMP로 가장 단순한 실시간 메시지 흐름을 붙여보�
 ## 브랜치 사용 방법
 
 - `main`: 이 레포의 주제, 문서, 브랜치 구조를 안내하는 대표 브랜치
-- `08-implementation`: 학생 실습용 starter 브랜치
-- `08-answer`: 비교용 정답 브랜치
+- `08-implementation`: 실습용 starter 브랜치
+- `08-answer`: 참고 구현 브랜치
 
-학생은 반드시 `08-implementation`에서 시작합니다.
+실습은 반드시 `08-implementation`에서 시작합니다.
 
 ```bash
 git clone -b 08-implementation https://github.com/stdiodh/spring-boot-realtime-communication-lab.git
@@ -28,7 +28,7 @@ cd spring-boot-realtime-communication-lab
 git checkout -b feat/<이름>
 ```
 
-정답 비교가 필요할 때는 아래 흐름을 사용합니다.
+참고 구현 비교가 필요할 때는 아래 흐름을 사용합니다.
 
 ```bash
 git fetch origin
@@ -39,7 +39,7 @@ git diff origin/08-implementation..origin/08-answer
 
 - [이론 문서](./docs/theory.md)
 - [구현 안내](./docs/implementation.md)
-- [정답 가이드](./docs/answer-guide.md)
+- [참고 구현 가이드](./docs/answer-guide.md)
 - [체크리스트](./docs/checklist.md)
 - [제공 자료 안내](./docs/assets.md)
 
@@ -65,7 +65,7 @@ git diff origin/08-implementation..origin/08-answer
 - 기본 보안 설정과 패키지 구조
 - MySQL + Redis 실행용 `compose.yaml`
 
-학생은 실시간 메시지 수신과 broadcast 핵심 흐름만 직접 구현합니다.
+실습자는 실시간 메시지 수신과 broadcast 핵심 흐름만 직접 구현합니다.
 
 ## 실행 방법
 
