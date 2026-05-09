@@ -1,13 +1,13 @@
-# 실시간 통신 정답 가이드
+# 실시간 통신 참고 구현 가이드
 
-## 정답을 보기 전에 먼저 확인할 것
+## 참고 구현을 보기 전에 먼저 확인할 것
 
 - `ChatMessage`에 sender와 content가 담기는가
 - `WebSocketConfig`에서 endpoint와 topic 설정이 보이는가
 - `WebSocketController`가 메시지를 받고 다시 topic으로 보내는가
 - 테스트 페이지에서 connect -> send -> receive가 실제로 보이는가
 
-## 1. 메시지 DTO 정답 포인트
+## 1. 메시지 DTO 참고 구현 포인트
 
 - 이번 시퀀스는 최소 메시지 구조만 있으면 충분합니다.
 - sender와 content 두 필드만 있어도 실시간 흐름을 이해할 수 있습니다.
@@ -21,9 +21,9 @@ data class ChatMessage(
 )
 ```
 
-## 2. 메시지 수신 메서드 정답 포인트
+## 2. 메시지 수신 메서드 참고 구현 포인트
 
-정답 흐름은 아래 순서입니다.
+참고 구현 흐름은 아래 순서입니다.
 
 1. `@MessageMapping("/chat.send")`로 클라이언트 전송 경로를 연결합니다.
 2. `ChatMessage`를 파라미터로 받습니다.
@@ -40,9 +40,9 @@ fun send(message: ChatMessage): ChatMessage {
 }
 ```
 
-## 3. WebSocket 설정 정답 포인트
+## 3. WebSocket 설정 참고 구현 포인트
 
-정답 흐름은 아래 순서입니다.
+참고 구현 흐름은 아래 순서입니다.
 
 1. simple broker를 `/topic`으로 엽니다.
 2. application destination prefix를 `/app`으로 둡니다.
@@ -84,7 +84,7 @@ override fun registerStompEndpoints(registry: StompEndpointRegistry) {
 한쪽 탭에서 보낸 메시지가 다른 탭에도 바로 나타나면
 실시간 broadcast 흐름을 더 분명하게 확인할 수 있습니다.
 
-## 6. 학생이 자주 틀리는 포인트
+## 6. 실습자가 자주 틀리는 포인트
 
 - endpoint와 topic 경로를 같은 것으로 생각하는 경우
 - `@MessageMapping`만 붙이고 `@SendTo`를 빠뜨리는 경우
