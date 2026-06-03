@@ -72,8 +72,8 @@ git diff 08-implementation..08-answer
 
 ## Visual Lab
 
-현재 `main` 가이드 브랜치에는 Visual Lab 진입점이 없습니다.
-Visual Lab을 구현할 경우 이 레포의 아래 위치를 사용합니다.
+`main` 가이드 브랜치에는 WebSocket/STOMP 흐름을 훑어보는 Visual Lab 진입점이 있습니다.
+이 페이지는 정답 비교 페이지가 아니라 연결, 구독, 발행, 브로드캐스트 순서를 먼저 이해하기 위한 정적 학습 화면입니다.
 
 ```text
 docs/visual-lab/index.html
@@ -84,3 +84,4 @@ docs/visual-lab/index.html
 - [레포 가이드](./docs/repo-guide.md)
 - [브랜치 가이드](./docs/branch-guide.md)
 - [시퀀스 맵](./docs/sequence-map.md)
+- [Visual Lab](./docs/visual-lab/index.html)

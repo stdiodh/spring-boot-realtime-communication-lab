@@ -22,9 +22,7 @@
 - `README.md`: 현재 브랜치 소개
 - `docs/theory.md`: 왜 실시간 통신이 필요한지 설명
 - `docs/implementation.md`: 학생이 손으로 칠 순서
-- `docs/answer-guide.md`: 강사용 비교 가이드
 - `docs/checklist.md`: 학생/강사 체크리스트
-- `docs/assets.md`: 미리 제공하는 것 정리
 
 단, 위 구조는 `08-implementation`, `08-answer` 브랜치에서만 실습용으로 보입니다.
 `main` 브랜치는 안내 브랜치이므로 레포 운영 문서만 둡니다.
@@ -36,4 +34,4 @@
 3. WebSocket과 STOMP를 이용해 메시지 수신과 broadcast 흐름을 붙입니다.
 
 이 순서가 흔들리면 문서와 코드도 함께 흔들리므로,
-학생은 항상 이전 레포 answer 다음 이 레포 implementation 순서로 이동해야 합니다.
+학생은 항상 이전 시퀀스 완료 후 이 레포의 implementation 브랜치로 이동해야 합니다.
