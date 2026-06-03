@@ -1,135 +1,140 @@
-# 실시간 통신 구현 안내
+# 구현 가이드
 
-## 이 도메인이 필요한 이유
+## 1. 구현 전에 확인할 문제
 
-지금까지의 대부분 기능은 HTTP 요청이 들어왔을 때만 응답하는 구조였습니다.
-하지만 채팅이나 알림처럼 서버가 바로 다시 알려줘야 하는 기능은
-이 요청-응답 한 번짜리 흐름만으로는 설명하기 어렵습니다.
+이번 answer는 WebSocket/STOMP를 이용해 서버가 받은 메시지를 topic으로 다시 보내는 최소 구현입니다. 목적은 채팅 서비스를 완성하는 것이 아니라, 연결 유지와 broadcast 흐름이 코드에서 어떻게 이어지는지 비교하는 것입니다.
 
-그래서 이번 실습은 WebSocket 연결을 작게 붙여서,
-메시지를 받고 다시 topic으로 뿌리는 가장 단순한 실시간 흐름을 직접 연결하는 단계입니다.
-
-## 오늘 실습에서 완성할 최종 흐름
-
-1. 브라우저가 `/ws-chat`에 연결합니다.
-2. 클라이언트가 `sender`, `content`를 담은 메시지를 보냅니다.
-3. 서버가 메시지를 받습니다.
-4. 서버가 `/topic/chat`으로 다시 보냅니다.
-5. 구독 중인 브라우저가 메시지를 바로 표시합니다.
-
-## 실습자가 직접 구현할 순서
-
-1. `ChatMessage.kt`에서 메시지 DTO 필드를 확인합니다.
-2. `WebSocketConfig.kt`에서 endpoint와 topic 흐름을 확인합니다.
-3. `WebSocketController.kt`에서 메시지 수신 메서드를 완성합니다.
-4. 같은 클래스에서 topic broadcast 흐름을 완성합니다.
-5. `realtime-demo.html`에서 메시지를 보내고 다시 받는지 확인합니다.
-
-## TODO를 넣을 파일
-
-- `src/main/kotlin/com/andi/rest_crud/dto/ChatMessage.kt`
-- `src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt`
-- `src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt`
-
-핵심 TODO는 `WebSocketController.kt`에 가장 많이 모이고,
-`ChatMessage.kt`, `WebSocketConfig.kt`는 실시간 흐름이 성립하는 기본 구조를 이해하는 역할을 맡습니다.
-
-## 각 파일의 역할
-
-### `ChatMessage.kt`
-
-- 실시간으로 주고받을 최소 데이터 구조를 정의합니다.
-- sender와 content 정도만 있어도 흐름을 이해하기에 충분합니다.
-
-### `WebSocketConfig.kt`
-
-- WebSocket endpoint와 STOMP broker 설정을 준비합니다.
-- 클라이언트가 어디로 보내고, 어디를 구독할지 여기서 드러납니다.
-
-### `WebSocketController.kt`
-
-- 실시간 메시지 수신과 다시 보내는 핵심 흐름을 담당합니다.
-- 이번 시퀀스에서 가장 중요한 파일입니다.
-
-## 단계별 구현 안내
-
-### Step 1. 메시지 DTO 만들기
-
-`ChatMessage.kt`에서 어떤 값이 꼭 필요한지 먼저 봅니다.
-이번 실습은 채팅 도메인을 깊게 확장하지 않으므로,
-`sender`, `content` 정도만 있어도 충분합니다.
-
-### Step 2. 메시지 수신 메서드 만들기
-
-`WebSocketController.kt`에서 아래 순서로 구현합니다.
-
-1. 클라이언트가 보낼 경로를 `@MessageMapping`으로 연결합니다.
-2. `ChatMessage`를 파라미터로 받아 서버가 메시지를 받게 합니다.
-3. 받은 메시지를 다음 단계에서 다시 보낼 준비를 합니다.
-
-### Step 3. topic broadcast 연결
-
-같은 메서드에서 아래 순서로 마무리합니다.
-
-1. `@SendTo("/topic/chat")`를 연결합니다.
-2. 받은 메시지를 그대로 반환하거나 필요한 최소 변형만 합니다.
-3. 구독 중인 클라이언트가 이 topic을 받는다고 생각하며 흐름을 확인합니다.
-
-### Step 4. 테스트 페이지에서 확인
-
-`realtime-demo.html`에서 아래 순서로 확인합니다.
-
-1. connect 버튼으로 WebSocket 연결을 엽니다.
-2. subscribe가 자동으로 연결되는지 확인합니다.
-3. sender, content를 입력해 send 버튼을 누릅니다.
-4. 아래 로그 영역에 같은 메시지가 다시 찍히는지 봅니다.
-
-## 각 단계의 확인 포인트
-
-- DTO 단계: sender와 content가 브라우저와 서버 사이에서 일관되게 쓰이는가
-- 설정 단계: endpoint와 topic 경로를 구분해서 설명할 수 있는가
-- controller 단계: 메시지를 받고 다시 보내는 흐름이 한 메서드에서 보이는가
-- 테스트 단계: 보낸 메시지가 실시간으로 다시 표시되는가
-
-## 실행 확인 방법
-
-1. 아래 명령으로 애플리케이션을 실행합니다.
-
-```bash
-./gradlew bootRun
-```
-
-2. 브라우저에서 아래 페이지를 엽니다.
+완성 흐름은 아래와 같습니다.
 
 ```text
-http://localhost:8080/realtime-demo.html
+브라우저 연결 -> 메시지 전송 -> 서버 수신 -> topic broadcast -> 브라우저 수신
 ```
 
-3. connect를 누른 뒤 메시지를 보냅니다.
-4. 로그에 실시간으로 메시지가 다시 표시되는지 확인합니다.
+## 2. 구현 순서
 
-테스트는 아래처럼 실행합니다.
+1. `ChatMessage.kt`에서 주고받을 메시지 구조를 확인합니다.
+2. `WebSocketConfig.kt`에서 endpoint, 전송 prefix, topic prefix를 확인합니다.
+3. `WebSocketController.kt`에서 메시지 수신 메서드를 확인합니다.
+4. 같은 메서드에서 topic broadcast가 어떻게 연결되는지 확인합니다.
+5. `realtime-demo.html`에서 connect, send, receive 순서를 확인합니다.
+
+## 3. Step 1. 메시지 DTO 확인
+
+### 해야 할 일
+
+`src/main/kotlin/com/andi/rest_crud/dto/ChatMessage.kt`가 이번 실습에 필요한 최소 필드를 담는지 확인합니다.
+
+```kotlin
+data class ChatMessage(
+    val sender: String,
+    val content: String
+)
+```
+
+### 왜 이 작업을 하는가
+
+서버와 브라우저가 같은 데이터 구조를 기대해야 메시지를 안정적으로 주고받을 수 있습니다. 이번 범위에서는 보낸 사람과 메시지 내용만 확인하면 실시간 흐름을 설명할 수 있습니다.
+
+### 확인 방법
+
+- 테스트 페이지 입력 필드와 DTO 필드가 같은 의미를 갖는지 확인합니다.
+- 채팅방, 읽음 처리, 저장용 필드가 answer에 포함되지 않은 이유를 설명합니다.
+
+## 4. Step 2. WebSocket 설정 확인
+
+### 해야 할 일
+
+`src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt`에서 연결 endpoint와 STOMP 경로 규칙을 확인합니다.
+
+```kotlin
+registry.enableSimpleBroker("/topic")
+registry.setApplicationDestinationPrefixes("/app")
+registry.addEndpoint("/ws-chat").setAllowedOriginPatterns("*").withSockJS()
+```
+
+### 왜 이 작업을 하는가
+
+`/ws-chat`은 연결 endpoint이고, `/app`은 클라이언트가 서버로 보낼 때 사용하는 prefix이며, `/topic`은 클라이언트가 서버 메시지를 받을 때 구독하는 prefix입니다. 세 역할이 분리되어야 테스트 페이지와 controller 흐름을 함께 설명할 수 있습니다.
+
+### 확인 방법
+
+- `/ws-chat`, `/app/chat.send`, `/topic/chat`을 각각 한 문장으로 설명합니다.
+- 테스트 페이지가 같은 경로를 사용하고 있는지 확인합니다.
+
+## 5. Step 3. 메시지 수신 메서드 확인
+
+### 해야 할 일
+
+`src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt`에서 클라이언트가 보낸 메시지를 받는 메서드를 확인합니다.
+
+```kotlin
+@MessageMapping("/chat.send")
+@SendTo("/topic/chat")
+fun send(message: ChatMessage): ChatMessage {
+    return message
+}
+```
+
+### 왜 이 작업을 하는가
+
+`@MessageMapping`은 클라이언트 전송 경로를 controller 메서드로 연결합니다. `ChatMessage` 파라미터는 브라우저에서 보낸 메시지를 서버 객체로 받는 지점입니다.
+
+### 확인 방법
+
+- starter 구현과 비교해 메시지 수신 annotation과 DTO 파라미터가 맞게 연결되었는지 확인합니다.
+- 메시지 저장이나 채팅방 분기 로직이 이번 answer에 없는 이유를 설명합니다.
+
+## 6. Step 4. topic broadcast 확인
+
+### 해야 할 일
+
+수신 메서드의 반환값이 `/topic/chat` 구독자에게 다시 전달되는지 확인합니다.
+
+### 왜 이 작업을 하는가
+
+실시간 기능의 핵심은 서버가 받은 메시지를 연결된 클라이언트들에게 다시 전달하는 흐름입니다. 이번 answer는 메시지를 그대로 반환해 broadcast 구조를 가장 작게 보여줍니다.
+
+### 확인 방법
+
+- 브라우저 탭을 두 개 열고 한쪽에서 보낸 메시지가 다른 쪽에도 표시되는지 확인합니다.
+- 메시지 발행 전에 connect가 완료되었는지 확인합니다.
+
+## 7. Step 5. 테스트 페이지에서 확인
+
+### 해야 할 일
+
+아래 순서로 화면을 확인합니다.
+
+1. 애플리케이션을 실행합니다.
+2. `http://localhost:8080/realtime-demo.html`을 엽니다.
+3. connect 버튼으로 연결합니다.
+4. sender와 content를 입력하고 메시지를 보냅니다.
+5. 채팅 영역과 이벤트 로그에 수신 결과가 표시되는지 확인합니다.
+
+### 왜 이 작업을 하는가
+
+테스트 페이지는 설정, DTO, controller가 하나의 흐름으로 연결되었는지 확인하는 가장 빠른 진입점입니다.
+
+### 확인 방법
+
+자동화 테스트를 실행합니다.
 
 ```bash
 ./gradlew test
 ```
 
-## 실습자 체크 질문
+## 마지막 확인
 
-- 왜 이 기능은 HTTP 요청 하나만으로 설명하기 어려운가요?
-- 메시지 DTO에 어떤 값이 들어가야 흐름이 보이나요?
-- 서버가 받은 메시지를 다시 보내는 지점은 어디인가요?
-- `/app/chat.send`와 `/topic/chat`을 각각 어떻게 설명할 수 있나요?
+- HTTP 요청/응답과 WebSocket 연결 유지 흐름을 구분해 설명합니다.
+- `/app/chat.send`와 `/topic/chat`의 역할을 분리해서 설명합니다.
+- starter 구현과 비교해 누락된 annotation, 반환 흐름, 경로 연결을 찾습니다.
+- 테스트 페이지와 `./gradlew test` 결과를 함께 확인합니다.
 
-## 리뷰용 확인 포인트
+<details>
+<summary>멘토용 진행 포인트</summary>
 
-- HTTP 요청/응답과 실시간 메시지 흐름 차이를 그림으로 보여줄 수 있는가
-- connect -> send -> receive 순서를 시연할 준비가 되었는가
-- WebSocketConfig에서 endpoint와 topic을 구분해 설명할 수 있는가
-- 이번 단계에서 메시지 저장이나 채팅방 관리까지 확장하지 않는 이유가 분명한가
+- 각 Step에서 경로 이름보다 "연결", "전송", "구독" 역할을 먼저 설명하게 합니다.
+- starter와 비교할 때 `return message` 자체보다 `@SendTo`와 topic 구독자의 관계를 확인시킵니다.
+- 구현이 끝나면 메시지 저장을 추가하지 않은 이유와 다음 확장 지점을 설명하게 합니다.
 
-## 다음 도메인 연결 포인트
-
-다음 시퀀스에서 배포와 운영 환경으로 넘어가면,
-이 실시간 연결이 실제 서버 환경에서 어떻게 유지되고 관찰될지까지 생각해야 합니다.
-이번 실습은 그 전에 실시간 통신의 가장 작은 동작 단위를 손으로 붙여보는 단계입니다.
+</details>

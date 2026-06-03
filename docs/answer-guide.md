@@ -47,7 +47,7 @@ fun send(message: ChatMessage): ChatMessage {
 1. simple broker를 `/topic`으로 엽니다.
 2. application destination prefix를 `/app`으로 둡니다.
 3. endpoint를 `/ws-chat`으로 엽니다.
-4. 테스트 페이지에서 쉽게 연결할 수 있게 SockJS를 붙입니다.
+4. 테스트 페이지에서 별도 클라이언트 설정 없이 연결할 수 있도록 SockJS를 붙입니다.
 
 예시 핵심:
 
