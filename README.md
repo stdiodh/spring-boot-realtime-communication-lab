@@ -5,11 +5,11 @@
 
 ## 이 레포에서 배우는 것
 
-- WebSocket/STOMP 기반 실시간 메시지 흐름
-- HTTP와 WebSocket 차이
-- 메시지 수신 -> topic broadcast -> 실시간 수신
-- 테스트 페이지 기반 실시간 확인
-- 메시지 타입 분리와 연결 상태 관리 입문
+- 새 메시지를 보려면 계속 새로고침해야 하는 문제
+- HTTP 요청/응답과 WebSocket 연결 유지의 차이
+- STOMP connect, subscribe, send, receive 흐름
+- 메시지 수신 뒤 topic broadcast로 여러 클라이언트에 전달하는 방식
+- 테스트 페이지에서 실시간 송수신을 확인하는 방법
 
 ## 시작 방법
 
