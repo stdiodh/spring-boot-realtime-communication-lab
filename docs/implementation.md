@@ -12,7 +12,7 @@ WebSocket/STOMP를 사용해 연결을 유지하고 topic으로 메시지를 받
 3. `WebSocketController.kt`에서 메시지를 받아 topic으로 보냅니다.
 4. `realtime-demo.html`에서 connect, subscribe, send, receive를 확인합니다.
 
-위 파일 경로는 `08-implementation`, `08-answer` 브랜치 기준입니다.
+클라이언트는 `/ws-chat`에 연결하고, `/topic/chat`을 구독한 뒤 `/app/chat.send`로 메시지를 보냅니다.
 
 ## 3. 핵심 코드
 
@@ -20,8 +20,8 @@ WebSocket/STOMP를 사용해 연결을 유지하고 topic으로 메시지를 받
 클라이언트가 보낸 메시지를 서버가 topic으로 다시 보내야 다른 구독자가 받을 수 있습니다.
 
 ```kotlin
-@MessageMapping("/chat")
-@SendTo("/topic/messages")
+@MessageMapping("/chat.send")
+@SendTo("/topic/chat")
 fun send(message: ChatMessage): ChatMessage {
     return message
 }

@@ -9,10 +9,10 @@
 
 ## 실습 확인
 
-- [ ] WebSocket endpoint에 connect 했습니다.
-- [ ] topic을 subscribe 했습니다.
-- [ ] 메시지를 send 했습니다.
-- [ ] 같은 topic에서 receive를 확인했습니다.
+- [ ] `/ws-chat` WebSocket endpoint에 connect 했습니다.
+- [ ] `/topic/chat` topic을 subscribe 했습니다.
+- [ ] `/app/chat.send`로 메시지를 send 했습니다.
+- [ ] `/topic/chat`에서 receive를 확인했습니다.
 - [ ] `realtime-demo.html`에서 송수신 순서를 확인했습니다.
 
 ## 마무리 확인

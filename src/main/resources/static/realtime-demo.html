@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Realtime Demo</title>
+  <style>
+    body {
+      color: #172026;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 32px;
+    }
+
+    main {
+      max-width: 720px;
+    }
+
+    label,
+    input,
+    textarea,
+    button {
+      display: block;
+      font: inherit;
+    }
+
+    label {
+      font-weight: 700;
+      margin-top: 16px;
+    }
+
+    input,
+    textarea {
+      border: 1px solid #c7d0d9;
+      border-radius: 6px;
+      box-sizing: border-box;
+      margin-top: 6px;
+      padding: 10px;
+      width: 100%;
+    }
+
+    button {
+      background: #145ea8;
+      border: 0;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      display: inline-block;
+      margin: 16px 8px 0 0;
+      padding: 10px 14px;
+    }
+
+    button:disabled {
+      background: #8a99a8;
+      cursor: not-allowed;
+    }
+
+    #messages {
+      border: 1px solid #d7dee6;
+      border-radius: 6px;
+      margin-top: 20px;
+      min-height: 160px;
+      padding: 12px;
+    }
+
+    .message {
+      border-bottom: 1px solid #edf1f5;
+      padding: 8px 0;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Realtime WebSocket Demo</h1>
+  <p>Connect, subscribe, send, receive 순서로 `/topic/chat` broadcast를 확인합니다.</p>
+
+  <button id="connectButton" type="button">Connect</button>
+  <button id="disconnectButton" type="button" disabled>Disconnect</button>
+
+  <label for="sender">Sender</label>
+  <input id="sender" value="student">
+
+  <label for="content">Message</label>
+  <textarea id="content" rows="4">Hello WebSocket</textarea>
+
+  <button id="sendButton" type="button" disabled>Send</button>
+
+  <section id="messages" aria-live="polite"></section>
+</main>
+
+<script>
+  const connectButton = document.querySelector("#connectButton");
+  const disconnectButton = document.querySelector("#disconnectButton");
+  const sendButton = document.querySelector("#sendButton");
+  const messages = document.querySelector("#messages");
+  const sender = document.querySelector("#sender");
+  const content = document.querySelector("#content");
+  let socket = null;
+
+  function appendMessage(text) {
+    const item = document.createElement("div");
+    item.className = "message";
+    item.textContent = text;
+    messages.prepend(item);
+  }
+
+  function sendFrame(command, headers = {}, body = "") {
+    const headerLines = Object.entries(headers)
+      .map(([key, value]) => `${key}:${value}`)
+      .join("\n");
+    socket.send(`${command}\n${headerLines}\n\n${body}\0`);
+  }
+
+  function handleFrame(frame) {
+    if (frame.startsWith("CONNECTED")) {
+      sendFrame("SUBSCRIBE", { id: "chat-subscription", destination: "/topic/chat" });
+      sendButton.disabled = false;
+      appendMessage("Subscribed to /topic/chat");
+      return;
+    }
+
+    if (frame.startsWith("MESSAGE")) {
+      const body = frame.split("\n\n")[1].replace("\0", "");
+      const message = JSON.parse(body);
+      appendMessage(`${message.sender}: ${message.content}`);
+    }
+  }
+
+  connectButton.addEventListener("click", () => {
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    socket = new WebSocket(`${protocol}://${window.location.host}/ws-chat`);
+
+    socket.addEventListener("open", () => {
+      sendFrame("CONNECT", { "accept-version": "1.2", host: window.location.host });
+      connectButton.disabled = true;
+      disconnectButton.disabled = false;
+      appendMessage("Connected to /ws-chat");
+    });
+
+    socket.addEventListener("message", (event) => {
+      event.data.split("\0").filter(Boolean).forEach((frame) => handleFrame(`${frame}\0`));
+    });
+
+    socket.addEventListener("close", () => {
+      connectButton.disabled = false;
+      disconnectButton.disabled = true;
+      sendButton.disabled = true;
+      appendMessage("Disconnected");
+    });
+  });
+
+  disconnectButton.addEventListener("click", () => {
+    if (socket) {
+      sendFrame("DISCONNECT");
+      socket.close();
+    }
+  });
+
+  sendButton.addEventListener("click", () => {
+    const payload = JSON.stringify({
+      sender: sender.value.trim() || "student",
+      content: content.value.trim()
+    });
+    sendFrame("SEND", { destination: "/app/chat.send", "content-type": "application/json" }, payload);
+  });
+</script>
+</body>
+</html>

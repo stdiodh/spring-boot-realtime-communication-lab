@@ -27,7 +27,7 @@ connect -> subscribe -> send -> server receive -> topic broadcast -> receive
 
 ## 4. 핵심 코드로 연결하기
 
-아래 경로는 `08-implementation`, `08-answer` 브랜치 기준 실제 코드 경로입니다.
+아래 경로는 이번 시퀀스의 실제 코드 경로입니다.
 
 - `src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt`: WebSocket endpoint와 STOMP broker prefix를 설정합니다.
 - `src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt`: 클라이언트가 보낸 메시지를 받고 topic으로 broadcast합니다.
@@ -38,15 +38,15 @@ connect -> subscribe -> send -> server receive -> topic broadcast -> receive
 실시간 통신에서 가장 자주 섞이는 문제는 “어디로 보내고, 어디를 구독하고, 어디서 받는가”입니다.
 
 ```kotlin
-@MessageMapping("/chat")
-@SendTo("/topic/messages")
+@MessageMapping("/chat.send")
+@SendTo("/topic/chat")
 fun send(message: ChatMessage): ChatMessage {
     return message
 }
 ```
 
 이 코드는 클라이언트가 보낸 메시지를 서버가 받아 구독 topic으로 다시 보내는 문제를 해결합니다.
-구독자는 `/topic/messages`로 전달된 메시지를 받습니다.
+클라이언트는 `/ws-chat`에 연결하고, `/app/chat.send`로 보내며, 구독자는 `/topic/chat`으로 전달된 메시지를 받습니다.
 
 ## 5. 실행/테스트 결과로 확인할 것
 

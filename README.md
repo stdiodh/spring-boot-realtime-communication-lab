@@ -48,8 +48,8 @@ http://localhost:8080/realtime-demo.html
 
 테스트가 확인하는 것:
 
-- WebSocket 연결이 열리는지 확인합니다.
-- topic 구독과 메시지 발행 흐름을 확인합니다.
+- `/ws-chat` WebSocket 연결이 열리는지 확인합니다.
+- `/topic/chat` 구독과 `/app/chat.send` 발행 흐름을 확인합니다.
 - 발행한 메시지를 구독자가 수신하는지 확인합니다.
 
 실패하면 먼저 볼 것:

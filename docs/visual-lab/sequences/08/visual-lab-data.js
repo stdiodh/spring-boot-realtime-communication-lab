@@ -310,7 +310,7 @@ window.visualLabData = {
       "title": "STOMP endpoint와 topic broker를 분리합니다",
       "file": "src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt",
       "language": "kotlin",
-      "snippet": "override fun configureMessageBroker(registry: MessageBrokerRegistry) {\n    registry.enableSimpleBroker(\"/topic\")\n    registry.setApplicationDestinationPrefixes(\"/app\")\n}\n\noverride fun registerStompEndpoints(registry: StompEndpointRegistry) {\n    registry.addEndpoint(\"/ws-chat\")\n        .setAllowedOriginPatterns(\"*\")\n        .withSockJS()\n}",
+      "snippet": "override fun configureMessageBroker(registry: MessageBrokerRegistry) {\n    registry.enableSimpleBroker(\"/topic\")\n    registry.setApplicationDestinationPrefixes(\"/app\")\n}\n\noverride fun registerStompEndpoints(registry: StompEndpointRegistry) {\n    registry.addEndpoint(\"/ws-chat\")\n        .setAllowedOriginPatterns(\"*\")\n}",
       "explanation": "클라이언트는 endpoint에 연결하고, 메시지는 /app과 /topic 역할로 나뉩니다.",
       "check": "connect, subscribe, send 순서를 테스트 페이지에서 지킵니다."
     },
@@ -733,7 +733,7 @@ window.visualLabData = {
           "title": "STOMP endpoint와 topic broker를 분리합니다",
           "file": "src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt",
           "language": "kotlin",
-          "snippet": "override fun configureMessageBroker(registry: MessageBrokerRegistry) {\n    registry.enableSimpleBroker(\"/topic\")\n    registry.setApplicationDestinationPrefixes(\"/app\")\n}\n\noverride fun registerStompEndpoints(registry: StompEndpointRegistry) {\n    registry.addEndpoint(\"/ws-chat\")\n        .setAllowedOriginPatterns(\"*\")\n        .withSockJS()\n}",
+          "snippet": "override fun configureMessageBroker(registry: MessageBrokerRegistry) {\n    registry.enableSimpleBroker(\"/topic\")\n    registry.setApplicationDestinationPrefixes(\"/app\")\n}\n\noverride fun registerStompEndpoints(registry: StompEndpointRegistry) {\n    registry.addEndpoint(\"/ws-chat\")\n        .setAllowedOriginPatterns(\"*\")\n}",
           "explanation": "클라이언트는 endpoint에 연결하고, 메시지는 /app과 /topic 역할로 나뉩니다.",
           "check": "connect, subscribe, send 순서를 테스트 페이지에서 지킵니다."
         },
