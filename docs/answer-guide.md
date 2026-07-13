@@ -58,7 +58,9 @@ override fun configureMessageBroker(registry: MessageBrokerRegistry) {
 }
 
 override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-    registry.addEndpoint("/ws-chat").setAllowedOriginPatterns("*").withSockJS()
+    registry.addEndpoint("/ws-chat")
+        .setAllowedOriginPatterns(*allowedOriginPatterns)
+        .withSockJS()
 }
 ```
 

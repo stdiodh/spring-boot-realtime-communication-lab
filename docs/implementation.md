@@ -49,12 +49,15 @@ data class ChatMessage(
 ```kotlin
 registry.enableSimpleBroker("/topic")
 registry.setApplicationDestinationPrefixes("/app")
-registry.addEndpoint("/ws-chat").setAllowedOriginPatterns("*").withSockJS()
+registry.addEndpoint("/ws-chat")
+    .setAllowedOriginPatterns(*allowedOriginPatterns)
+    .withSockJS()
 ```
 
 ### 왜 이 작업을 하는가
 
 `/ws-chat`은 연결 endpoint이고, `/app`은 클라이언트가 서버로 보낼 때 사용하는 prefix이며, `/topic`은 클라이언트가 서버 메시지를 받을 때 구독하는 prefix입니다. 세 역할이 분리되어야 테스트 페이지와 controller 흐름을 함께 설명할 수 있습니다.
+개발 환경은 localhost Origin만 기본 허용하고, 운영에서는 `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`로 실제 프런트 Origin을 지정합니다.
 
 ### 확인 방법
 
