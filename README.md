@@ -28,9 +28,7 @@ git diff origin/08-implementation..origin/08-answer
 
 1. [이론 정리](./docs/theory.md)
 2. [구현 가이드](./docs/implementation.md)
-3. [참고 구현 가이드](./docs/answer-guide.md)
-4. [체크리스트](./docs/checklist.md)
-5. [제공 자료 안내](./docs/assets.md)
+3. [체크리스트](./docs/checklist.md)
 
 ## 실행 / 테스트 방법
 
@@ -51,6 +49,8 @@ docker compose up -d
 ```text
 http://localhost:8080/realtime-demo.html
 ```
+
+이 페이지와 `/ws-chat/**`은 실습 확인을 위해 공개되어 있으며, SockJS/STOMP 클라이언트를 jsDelivr CDN에서 불러오므로 브라우저 테스트에는 네트워크 연결이 필요합니다.
 
 자동화 테스트는 아래 명령으로 실행합니다.
 

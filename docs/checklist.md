@@ -7,6 +7,7 @@
 - [ ] `http://localhost:8080/realtime-demo.html`에서 connect가 완료됩니다.
 - [ ] sender와 content를 입력한 뒤 메시지를 보내면 화면에 수신 결과가 표시됩니다.
 - [ ] 브라우저 탭 두 개에서 같은 topic broadcast 흐름을 확인했습니다.
+- [ ] jsDelivr에서 SockJS/STOMP 스크립트를 불러올 수 있는 네트워크 환경인지 확인했습니다.
 
 ## 2. 코드 구조 확인
 
@@ -14,6 +15,7 @@
 - [ ] `WebSocketConfig.kt`에서 `/ws-chat`, `/app`, `/topic`의 역할을 설명할 수 있습니다.
 - [ ] `WebSocketController.kt`에서 `@MessageMapping`, `@SendTo`, 반환값의 관계를 설명할 수 있습니다.
 - [ ] 테스트 페이지가 서버 설정과 같은 경로를 사용합니다.
+- [ ] `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`와 실습용 `permitAll` 범위를 운영 설정과 구분할 수 있습니다.
 - [ ] 메시지 저장, 채팅방 관리, 읽음 처리, 사용자 세션 추적을 이번 범위에 추가하지 않았습니다.
 
 ## 3. 실패 케이스 확인

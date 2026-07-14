@@ -134,7 +134,7 @@ flowchart TD
 
 ### 5.3 테스트 페이지
 
-`realtime-demo.html`은 브라우저에서 연결, 구독, 발행, 수신을 확인하는 도구입니다.
+`realtime-demo.html`은 브라우저에서 연결, 구독, 발행, 수신을 확인하는 도구입니다. 이 페이지와 `/ws-chat/**`은 실습 확인을 위해 공개되어 있고, SockJS/STOMP 클라이언트는 jsDelivr CDN에서 로드됩니다.
 
 비교 포인트:
 
@@ -166,6 +166,7 @@ flowchart TD
 - `@SendTo` 없이 반환만 하면 구독자에게 broadcast되지 않습니다.
 - 메시지를 저장하지 않는 broadcast는 화면 표시에는 충분할 수 있지만 이력 조회는 보장하지 않습니다.
 - 인증이 필요한 서비스에서는 WebSocket handshake와 메시지 권한 검증을 별도로 설계해야 합니다.
+- 허용 Origin은 `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`로 실제 프런트 주소만 지정하고, 실습용 `permitAll`과 외부 CDN 의존을 운영 기본값으로 사용하지 않습니다.
 - 여러 서버 인스턴스에서 같은 topic을 쓰려면 simple broker만으로 충분한지 검토해야 합니다.
 
 ## 8. 용어 정리
@@ -227,7 +228,7 @@ flowchart TD
 
 ## 9. 다음 구현으로 연결되는 지점
 
-`docs/answer-guide.md`를 볼 때는 경로 문자열을 외우기보다 endpoint, send destination, subscribe topic, controller 반환값이 하나의 메시지 흐름으로 이어지는지 확인합니다. 다음 배포 시퀀스에서는 이런 연결이 실제 서버 환경에서 어떻게 유지되고 관찰되는지도 중요해집니다.
+`docs/implementation.md`와 `docs/checklist.md`를 볼 때는 경로 문자열을 외우기보다 endpoint, send destination, subscribe topic, controller 반환값이 하나의 메시지 흐름으로 이어지는지 확인합니다. 다음 배포 시퀀스에서는 이런 연결이 실제 서버 환경에서 어떻게 유지되고 관찰되는지도 중요해집니다.
 
 <details>
 <summary>멘토용 설명 포인트</summary>

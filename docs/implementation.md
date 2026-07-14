@@ -57,7 +57,7 @@ registry.addEndpoint("/ws-chat")
 ### 왜 이 작업을 하는가
 
 `/ws-chat`은 연결 endpoint이고, `/app`은 클라이언트가 서버로 보낼 때 사용하는 prefix이며, `/topic`은 클라이언트가 서버 메시지를 받을 때 구독하는 prefix입니다. 세 역할이 분리되어야 테스트 페이지와 controller 흐름을 함께 설명할 수 있습니다.
-개발 환경은 localhost Origin만 기본 허용하고, 운영에서는 `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`로 실제 프런트 Origin을 지정합니다.
+개발 환경은 localhost Origin만 기본 허용하고, 운영에서는 `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`로 실제 프런트 Origin을 지정합니다. `realtime-demo.html`과 `/ws-chat/**`의 `permitAll`은 실습용 공개 범위이며 운영 인증 정책이 아닙니다.
 
 ### 확인 방법
 
@@ -113,6 +113,8 @@ fun send(message: ChatMessage): ChatMessage {
 3. connect 버튼으로 연결합니다.
 4. sender와 content를 입력하고 메시지를 보냅니다.
 5. 채팅 영역과 이벤트 로그에 수신 결과가 표시되는지 확인합니다.
+
+테스트 페이지의 SockJS/STOMP 스크립트는 jsDelivr CDN에서 로드되므로 브라우저 테스트에는 네트워크 연결이 필요합니다. 운영에서는 외부 자산 버전 고정과 공급 방식을 별도로 결정합니다.
 
 ### 왜 이 작업을 하는가
 
