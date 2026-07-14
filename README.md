@@ -40,6 +40,8 @@ docker compose up -d
 http://localhost:8080/realtime-demo.html
 ```
 
+`main`의 데모는 외부 라이브러리 없이 native WebSocket으로 STOMP frame을 주고받습니다. 페이지와 `/ws-chat/**`은 실습 확인을 위해 공개되어 있으며, 허용 Origin은 `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`로 제한합니다.
+
 ## 테스트 방법
 
 ```bash
@@ -48,14 +50,15 @@ http://localhost:8080/realtime-demo.html
 
 테스트가 확인하는 것:
 
-- `/ws-chat` WebSocket 연결이 열리는지 확인합니다.
-- `/topic/chat` 구독과 `/app/chat.send` 발행 흐름을 확인합니다.
-- 발행한 메시지를 구독자가 수신하는지 확인합니다.
+- 자동 테스트는 실시간 데모 페이지가 인증 없이 열리는지 확인합니다.
+- `/ws-chat` 연결과 `/topic/chat` 구독, `/app/chat.send` 발행은 브라우저에서 수동 확인합니다.
+- 탭 두 개에서 발행한 메시지를 각 구독자가 수신하는지 확인합니다.
 
 실패하면 먼저 볼 것:
 
 - connect 완료 전에 subscribe/send가 실행되지 않았는지 확인합니다.
 - 구독 경로와 발행 경로를 혼동하지 않았는지 봅니다.
+- 실제 브라우저 Origin이 허용 패턴에 포함되는지 확인합니다.
 
 완료 기준:
 
@@ -82,7 +85,7 @@ docs/visual-lab/index.html
 
 ## 문서 안내
 
-- [레포 가이드](./docs/repo-guide.md)
-- [브랜치 가이드](./docs/branch-guide.md)
-- [시퀀스 맵](./docs/sequence-map.md)
+- [이론 정리](./docs/theory.md)
+- [구현 안내](./docs/implementation.md)
+- [체크리스트](./docs/checklist.md)
 - [Visual Lab](./docs/visual-lab/index.html)

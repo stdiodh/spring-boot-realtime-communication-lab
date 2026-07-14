@@ -23,7 +23,7 @@ STOMP는 WebSocket 위에서 destination, topic, message body를 더 명확히 �
 connect -> subscribe -> send -> server receive -> topic broadcast -> receive
 ```
 
-테스트 페이지는 연결, 구독, 발행, 수신을 눈으로 확인하는 도구입니다.
+`main`의 테스트 페이지는 외부 클라이언트 라이브러리 없이 native WebSocket으로 STOMP frame을 직접 보내 연결, 구독, 발행, 수신을 확인합니다.
 
 ## 4. 핵심 코드로 연결하기
 
@@ -33,6 +33,7 @@ connect -> subscribe -> send -> server receive -> topic broadcast -> receive
 - `src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt`: 클라이언트가 보낸 메시지를 받고 topic으로 broadcast합니다.
 - `src/main/kotlin/com/andi/rest_crud/dto/ChatMessage.kt`: 송수신 메시지 body 모양을 정합니다.
 - `src/main/resources/static/realtime-demo.html`: connect, subscribe, send, receive를 확인하는 테스트 화면입니다.
+- `src/main/kotlin/com/andi/rest_crud/security/SecurityConfig.kt`: 실습 데모와 `/ws-chat/**`의 공개 접근 범위를 정합니다.
 
 왜 이 코드를 보는지 먼저 정리합니다.
 실시간 통신에서 가장 자주 섞이는 문제는 “어디로 보내고, 어디를 구독하고, 어디서 받는가”입니다.
@@ -57,9 +58,10 @@ docker compose up -d
 ```
 
 브라우저에서 `http://localhost:8080/realtime-demo.html`을 열고 connect, subscribe, send, receive 순서를 확인합니다.
+다른 Origin에서 접속할 때는 `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`에 실제 프런트 주소를 지정합니다.
 
 ## 6. 한계와 다음 개선 방향
 
 이번 실습은 연결과 broadcast의 기본 흐름을 다룹니다.
-인증된 WebSocket 연결, 메시지 저장, 재전송, 대규모 broker 운영은 별도 개선 주제로 남깁니다.
+현재 `permitAll` 범위는 실습용입니다. 인증된 WebSocket 연결, 메시지 저장, 재전송, 대규모 broker 운영은 별도 개선 주제로 남깁니다.
 다음 시퀀스에서는 애플리케이션을 Docker와 운영 설정으로 실행 가능한 단위로 묶습니다.

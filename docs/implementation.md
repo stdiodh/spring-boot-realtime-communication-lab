@@ -7,12 +7,13 @@ WebSocket/STOMP를 사용해 연결을 유지하고 topic으로 메시지를 받
 
 ## 2. 구현 흐름
 
-1. `WebSocketConfig.kt`에서 endpoint와 broker prefix를 설정합니다.
+1. `WebSocketConfig.kt`에서 native WebSocket endpoint, 허용 Origin, broker prefix를 설정합니다.
 2. `ChatMessage.kt`에서 송수신 메시지 body를 정합니다.
 3. `WebSocketController.kt`에서 메시지를 받아 topic으로 보냅니다.
 4. `realtime-demo.html`에서 connect, subscribe, send, receive를 확인합니다.
 
 클라이언트는 `/ws-chat`에 연결하고, `/topic/chat`을 구독한 뒤 `/app/chat.send`로 메시지를 보냅니다.
+`main`의 `realtime-demo.html`은 STOMP frame을 직접 만들며 SockJS를 사용하지 않습니다. `08-implementation`/`08-answer`의 SockJS 기반 학습 페이지와 메커니즘을 구분합니다.
 
 ## 3. 핵심 코드
 
@@ -43,6 +44,8 @@ docker compose up -d
 ```text
 http://localhost:8080/realtime-demo.html
 ```
+
+페이지와 `/ws-chat/**`의 `permitAll`은 실습용 공개 범위입니다. 운영에서는 실제 프런트 Origin과 인증 정책을 별도로 적용합니다.
 
 ## 5. 한계와 다음 개선 방향
 

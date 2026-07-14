@@ -14,6 +14,8 @@
 - [ ] `/app/chat.send`로 메시지를 send 했습니다.
 - [ ] `/topic/chat`에서 receive를 확인했습니다.
 - [ ] `realtime-demo.html`에서 송수신 순서를 확인했습니다.
+- [ ] `main` 데모가 native WebSocket으로 STOMP frame을 전송하며 SockJS를 사용하지 않는다는 점을 확인했습니다.
+- [ ] `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`와 실습용 `permitAll` 범위를 운영 설정과 구분할 수 있습니다.
 
 ## 마무리 확인
 
