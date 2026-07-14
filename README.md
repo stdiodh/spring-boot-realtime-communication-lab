@@ -30,7 +30,6 @@ git checkout -b feat/<이름>
 1. [이론 정리](./docs/theory.md)
 2. [구현 가이드](./docs/implementation.md)
 3. [체크리스트](./docs/checklist.md)
-4. [제공 자료 안내](./docs/assets.md)
 
 핵심 파일은 아래 순서로 확인합니다.
 
@@ -58,6 +57,8 @@ docker compose up -d
 ```text
 http://localhost:8080/realtime-demo.html
 ```
+
+이 페이지와 `/ws-chat/**`은 실습 확인을 위해 공개되어 있으며, SockJS/STOMP 클라이언트를 jsDelivr CDN에서 불러오므로 브라우저 테스트에는 네트워크 연결이 필요합니다.
 
 자동화 테스트는 아래 명령으로 실행합니다.
 

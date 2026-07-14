@@ -7,11 +7,13 @@
 - [ ] `http://localhost:8080/realtime-demo.html`에서 connect가 완료됩니다.
 - [ ] sender와 content를 입력한 뒤 메시지를 보내면 화면에 수신 결과가 표시됩니다.
 - [ ] 가능하면 브라우저 탭 두 개에서 같은 topic broadcast 흐름을 확인했습니다.
+- [ ] jsDelivr에서 SockJS/STOMP 스크립트를 불러올 수 있는 네트워크 환경인지 확인했습니다.
 
 ## 2. 코드 구조 확인
 
 - [ ] `ChatMessage.kt`가 이번 실습에 필요한 최소 메시지 구조를 표현합니다.
 - [ ] `WebSocketConfig.kt`에서 endpoint, 전송 prefix, topic prefix의 역할을 설명할 수 있습니다.
+- [ ] `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`와 실습용 `permitAll` 범위를 운영 설정과 구분할 수 있습니다.
 - [ ] `WebSocketController.kt`에서 메시지 수신과 broadcast 흐름이 한눈에 보입니다.
 - [ ] 메시지 저장, 채팅방 관리, 읽음 처리, 사용자 세션 추적을 이번 범위에 추가하지 않았습니다.
 

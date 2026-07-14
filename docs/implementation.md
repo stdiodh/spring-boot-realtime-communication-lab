@@ -51,6 +51,7 @@ WebSocket으로 오가는 메시지도 서버와 클라이언트가 같은 데�
 
 - `/ws-chat`, `/app/chat.send`, `/topic/chat`을 각각 한 문장으로 설명합니다.
 - 테스트 페이지가 같은 경로를 사용하고 있는지 확인합니다.
+- endpoint가 SockJS를 사용하고, 허용 Origin은 `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`로 제한되는지 확인합니다.
 
 ## 5. Step 3. 메시지 수신 메서드 완성
 
@@ -93,6 +94,8 @@ HTTP controller가 HTTP 요청을 받는 것처럼, WebSocket controller는 STOM
 3. connect 버튼으로 연결합니다.
 4. sender와 content를 입력하고 메시지를 보냅니다.
 5. 채팅 영역과 이벤트 로그에 수신 결과가 표시되는지 확인합니다.
+
+`realtime-demo.html`과 `/ws-chat/**`은 실습용으로 인증 없이 접근할 수 있습니다. 페이지의 SockJS/STOMP 스크립트는 jsDelivr CDN에서 로드하므로 오프라인에서는 연결 테스트를 진행할 수 없습니다. 이 공개 범위를 운영 보안 기본값으로 사용하지 않습니다.
 
 ### 왜 이 작업을 하는가
 

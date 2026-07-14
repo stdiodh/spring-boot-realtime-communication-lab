@@ -138,7 +138,7 @@ flowchart TD
 
 ### 5.3 테스트 페이지 흐름 확인
 
-`realtime-demo.html`은 connect, subscribe, send, receive 순서를 눈으로 확인하는 도구입니다. 연결이 완료되기 전에 send를 누르면 메시지 흐름을 제대로 확인하기 어렵습니다.
+`realtime-demo.html`은 connect, subscribe, send, receive 순서를 눈으로 확인하는 도구입니다. 실습을 위해 이 페이지와 `/ws-chat/**`은 공개되어 있고, SockJS/STOMP 클라이언트는 jsDelivr CDN에서 로드됩니다. 연결이 완료되기 전에 send를 누르거나 외부 스크립트를 불러오지 못하면 메시지 흐름을 확인할 수 없습니다.
 
 확인 질문:
 
@@ -168,7 +168,8 @@ flowchart TD
 - topic 경로와 send 경로를 섞으면 클라이언트가 보내기만 하고 받지 못할 수 있습니다.
 - 메시지를 저장하지 않는 broadcast는 실시간 표시에는 충분할 수 있지만, 이력 조회는 보장하지 않습니다.
 - 브라우저 테스트에서는 connect 완료, subscribe 완료, send 순서를 로그로 확인해야 합니다.
-- 운영에서는 WebSocket endpoint의 origin, 인증, 세션, scale-out 브로커 전략을 별도로 검토해야 합니다.
+- 허용 Origin은 `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`로 실제 프런트 주소만 지정해야 합니다.
+- 실습용 공개 페이지와 `/ws-chat/**` 허용 범위, 외부 CDN 의존은 운영 배포 전에 인증과 고정된 자산 공급 방식으로 다시 설계해야 합니다.
 
 ## 8. 용어 정리
 
