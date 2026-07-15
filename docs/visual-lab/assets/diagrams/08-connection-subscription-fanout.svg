@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 500" role="img" aria-labelledby="title desc">
+  <title id="title">WebSocket connection, STOMP subscription and fan-out</title>
+  <desc id="desc">A WebSocket transport opens before the STOMP session becomes connected. A subscription to topic chat registers recipients. A send to the app destination reaches the controller and broker, then fans out through the topic destination only to subscribed sessions.</desc>
+  <metadata>Source: docs/theory.md, docs/implementation.md, docs/checklist.md. Original repository-local diagram. License: repository project terms; no external visual assets.</metadata>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10Z" fill="#2955E4"/>
+    </marker>
+    <marker id="arrowTeal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10Z" fill="#3F8996"/>
+    </marker>
+    <style>
+      text { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; fill: #111B3F; }
+      .title { font-size: 30px; font-weight: 800; fill: #0C2691; }
+      .sub { font-size: 22px; font-weight: 600; fill: #4B587C; }
+      .label { font-size: 25px; font-weight: 800; fill: #0C2691; }
+      .body { font-size: 22px; font-weight: 600; }
+      .utility { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 22px; font-weight: 800; }
+      .transport { fill: #EEF4FF; stroke: #2955E4; stroke-width: 3; }
+      .messaging { fill: #ECFBFA; stroke: #3F8996; stroke-width: 3; }
+      .client { fill: #FFFFFF; stroke: #6276A8; stroke-width: 3; }
+      .excluded { fill: #F1F7FF; stroke: #6276A8; stroke-width: 3; stroke-dasharray: 10 8; }
+      .line { fill: none; stroke: #2955E4; stroke-width: 4; marker-end: url(#arrow); }
+      .event { fill: none; stroke: #3F8996; stroke-width: 4; marker-end: url(#arrowTeal); }
+    </style>
+  </defs>
+
+  <rect width="640" height="500" fill="#F8F9FB"/>
+  <text class="title" x="24" y="40">Connection → Subscription → Fan-out</text>
+  <text class="sub" x="24" y="74">연결과 구독은 서로 다른 완료 조건이다</text>
+
+  <rect class="transport" x="20" y="108" width="180" height="112" rx="14"/>
+  <text class="utility" x="42" y="143">WEBSOCKET</text>
+  <text class="label" x="42" y="177">OPEN</text>
+  <text class="body" x="42" y="205">/ws-chat 통로</text>
+
+  <path class="line" d="M200 164H218"/>
+
+  <rect class="transport" x="230" y="108" width="180" height="112" rx="14"/>
+  <text class="utility" x="252" y="143">STOMP</text>
+  <text class="label" x="252" y="177">session 준비</text>
+  <text class="body" x="252" y="205">CONNECTED</text>
+
+  <path class="line" d="M410 164H428"/>
+
+  <rect class="messaging" x="440" y="108" width="180" height="112" rx="14"/>
+  <text class="utility" x="462" y="143">SUBSCRIBE</text>
+  <text class="label" x="462" y="177">/topic/chat</text>
+  <text class="body" x="462" y="205">수신자 등록</text>
+
+  <path class="event" d="M530 220V270"/>
+  <text class="utility" x="382" y="253">구독자 집합</text>
+
+  <rect class="client" x="20" y="282" width="180" height="112" rx="14"/>
+  <text class="utility" x="42" y="317">SEND · /app</text>
+  <text class="label" x="42" y="351">chat.send</text>
+  <text class="body" x="42" y="379">Browser A 발행</text>
+
+  <path class="line" d="M200 338H218"/>
+
+  <rect class="transport" x="230" y="282" width="180" height="112" rx="14"/>
+  <text class="utility" x="252" y="317">HANDLER</text>
+  <text class="label" x="252" y="351">Controller</text>
+  <text class="body" x="252" y="379">Broker로 전달</text>
+
+  <path class="event" d="M410 338H428"/>
+
+  <rect class="messaging" x="440" y="282" width="180" height="112" rx="14"/>
+  <text class="utility" x="462" y="317">/topic/chat</text>
+  <text class="label" x="462" y="351">A + B 수신</text>
+  <text class="body" x="462" y="379">구독 session만</text>
+
+  <rect class="excluded" x="20" y="430" width="600" height="50" rx="12"/>
+  <text class="utility" x="42" y="464">CONNECTED only → MESSAGE 수신 제외</text>
+</svg>
