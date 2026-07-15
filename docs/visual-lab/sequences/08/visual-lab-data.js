@@ -10,6 +10,165 @@ window.visualLabData = {
     "path": "spring-boot-realtime-communication-lab"
   },
   "defaultSequence": "08",
+  "workbench": {
+    "kind": "realtime",
+    "title": "Connection & Broadcast Console",
+    "instruction": "연결과 구독 상태를 선택해 STOMP 메시지가 어느 destination을 지나 어떤 브라우저 탭까지 도달하는지 추적하세요.",
+    "scenarios": [
+      {
+        "id": "subscribed-broadcast",
+        "label": "두 탭 구독 · 정상 broadcast",
+        "flowId": "connect-send-receive",
+        "tone": "recovered",
+        "prompt": "두 브라우저 탭이 같은 topic을 구독한 뒤 한 탭에서 메시지를 보냅니다.",
+        "route": [
+          "Browser A",
+          "/ws-chat",
+          "STOMP CONNECTED",
+          "SUBSCRIBE /topic/chat",
+          "SEND /app/chat.send",
+          "WebSocketController",
+          "STOMP Broker",
+          "/topic/chat",
+          "Browser subscribers"
+        ],
+        "snapshot": [
+          {
+            "label": "Connection",
+            "value": "CONNECTED",
+            "tone": "recovered"
+          },
+          {
+            "label": "Publish destination",
+            "value": "/app/chat.send",
+            "tone": "signal"
+          },
+          {
+            "label": "Broadcast destination",
+            "value": "/topic/chat",
+            "tone": "recovered"
+          }
+        ],
+        "evidence": "두 탭의 테스트 페이지에서 같은 MESSAGE frame과 payload가 수신되는지 확인합니다.",
+        "outcome": "서버가 받은 ChatMessage를 같은 topic의 모든 구독 탭에 다시 전달합니다.",
+        "fanOut": [
+          "발신 탭",
+          "두 번째 구독 탭"
+        ]
+      },
+      {
+        "id": "connect-not-ready",
+        "label": "연결 전 조작 · 중단",
+        "flowId": "connect-send-receive",
+        "tone": "blocked",
+        "prompt": "CONNECTED frame을 확인하기 전에 subscribe 또는 send를 시도합니다.",
+        "route": [
+          "Browser",
+          "/ws-chat",
+          "STOMP CONNECTED",
+          "SUBSCRIBE /topic/chat",
+          "SEND /app/chat.send",
+          "WebSocketController",
+          "/topic/chat",
+          "Browser receive"
+        ],
+        "snapshot": [
+          {
+            "label": "Connection",
+            "value": "CONNECTING",
+            "tone": "blocked"
+          },
+          {
+            "label": "Subscription",
+            "value": "생성되지 않음",
+            "tone": "warning"
+          },
+          {
+            "label": "Receive",
+            "value": "확인할 수 없음",
+            "tone": "blocked"
+          }
+        ],
+        "evidence": "테스트 페이지의 연결 상태에 CONNECTED가 표시되지 않았고 MESSAGE frame도 없는지 확인합니다.",
+        "outcome": "연결 완료를 먼저 확인한 뒤 subscribe와 send 순서로 다시 진행해야 합니다.",
+        "stopAfter": 1
+      },
+      {
+        "id": "sender-not-subscribed",
+        "label": "발신 탭 미구독 · 부분 수신",
+        "flowId": "connect-send-receive",
+        "tone": "warning",
+        "prompt": "발신 탭은 연결만 하고, 두 번째 탭만 /topic/chat을 구독한 상태에서 메시지를 보냅니다.",
+        "route": [
+          "Browser A",
+          "/ws-chat",
+          "STOMP CONNECTED",
+          "SEND /app/chat.send",
+          "WebSocketController",
+          "STOMP Broker",
+          "/topic/chat"
+        ],
+        "snapshot": [
+          {
+            "label": "Browser A subscription",
+            "value": "없음",
+            "tone": "warning"
+          },
+          {
+            "label": "Server receive",
+            "value": "ChatMessage",
+            "tone": "signal"
+          },
+          {
+            "label": "Browser A receive",
+            "value": "없음",
+            "tone": "warning"
+          }
+        ],
+        "evidence": "발신 탭에는 MESSAGE frame이 없고, 이미 구독한 두 번째 탭에서만 payload가 보이는지 확인합니다.",
+        "outcome": "send와 receive는 별도 약속이므로 메시지를 받으려는 탭은 topic을 먼저 구독해야 합니다.",
+        "fanOut": [
+          "두 번째 구독 탭"
+        ]
+      },
+      {
+        "id": "origin-rejected",
+        "label": "Origin 불일치 · 연결 거절",
+        "flowId": "connect-send-receive",
+        "tone": "blocked",
+        "prompt": "브라우저 Origin이 APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS에 포함되지 않은 상태로 연결합니다.",
+        "route": [
+          "Browser",
+          "Origin check",
+          "/ws-chat",
+          "STOMP CONNECTED",
+          "SUBSCRIBE /topic/chat",
+          "SEND /app/chat.send",
+          "/topic/chat receive"
+        ],
+        "snapshot": [
+          {
+            "label": "Allowed origin",
+            "value": "불일치",
+            "tone": "blocked"
+          },
+          {
+            "label": "WebSocket",
+            "value": "연결되지 않음",
+            "tone": "blocked"
+          },
+          {
+            "label": "STOMP session",
+            "value": "생성되지 않음",
+            "tone": "warning"
+          }
+        ],
+        "evidence": "실제 프런트 Origin과 허용 패턴을 비교하고 테스트 페이지에서 연결 실패 상태를 확인합니다.",
+        "outcome": "허용할 프런트 Origin을 환경 설정에 명시한 뒤 연결부터 다시 확인해야 합니다.",
+        "stopAfter": 1
+      }
+    ]
+  },
   "actors": [
     {
       "id": "browser",
