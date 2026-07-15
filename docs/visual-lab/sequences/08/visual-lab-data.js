@@ -14,6 +14,84 @@ window.visualLabData = {
     "kind": "realtime",
     "title": "Connection & Broadcast Console",
     "instruction": "연결과 구독 상태를 선택해 STOMP 메시지가 어느 destination을 지나 어떤 브라우저 탭까지 도달하는지 추적하세요.",
+    "nodes": {
+      "browserA": {
+        "label": "Browser A",
+        "icon": "client",
+        "kind": "client",
+        "role": "WebSocket 연결과 STOMP session을 만들고 ChatMessage를 발행합니다.",
+        "boundary": "브라우저"
+      },
+      "browserB": {
+        "label": "Browser B",
+        "icon": "client",
+        "kind": "client",
+        "role": "같은 topic을 구독하고 broker가 broadcast한 ChatMessage를 받습니다.",
+        "boundary": "브라우저"
+      },
+      "demoUiGuard": {
+        "label": "Demo UI connection guard",
+        "icon": "gate",
+        "kind": "gate",
+        "role": "main 데모에서 CONNECTED 전 send를 비활성화하고 CONNECTED 뒤 자동 subscribe합니다.",
+        "boundary": "브라우저"
+      },
+      "originGate": {
+        "label": "Allowed Origin gate",
+        "icon": "security",
+        "kind": "gate",
+        "role": "HTTP Upgrade 전에 브라우저 Origin이 허용 패턴과 맞는지 검사합니다.",
+        "boundary": "WebSocket handshake",
+        "codePointIds": [
+          "websocket-config"
+        ]
+      },
+      "websocketEndpoint": {
+        "label": "WebSocket endpoint",
+        "icon": "websocket",
+        "kind": "websocket",
+        "role": "native WebSocket transport가 연결되는 /ws-chat 입구입니다.",
+        "boundary": "WebSocket transport",
+        "codePointIds": [
+          "websocket-config"
+        ]
+      },
+      "stompRouter": {
+        "label": "STOMP message router",
+        "icon": "handler",
+        "kind": "handler",
+        "role": "CONNECT, SUBSCRIBE, SEND frame을 session과 destination 규칙에 따라 라우팅합니다.",
+        "boundary": "STOMP protocol"
+      },
+      "webSocketController": {
+        "label": "WebSocketController",
+        "icon": "api",
+        "kind": "handler",
+        "role": "/app/chat.send의 ChatMessage를 받고 @SendTo 결과를 반환합니다.",
+        "boundary": "애플리케이션 메시징",
+        "codePointIds": [
+          "topic-broadcast"
+        ]
+      },
+      "subscriptionRegistry": {
+        "label": "Subscription registry",
+        "icon": "broker",
+        "kind": "broker",
+        "role": "/topic/chat을 구독한 STOMP session 목록을 유지합니다.",
+        "boundary": "STOMP broker"
+      },
+      "simpleBroker": {
+        "label": "Simple Broker",
+        "icon": "broker",
+        "kind": "broker",
+        "role": "/topic destination의 MESSAGE를 현재 구독 session에 fan-out합니다.",
+        "boundary": "STOMP broker",
+        "codePointIds": [
+          "websocket-config",
+          "topic-broadcast"
+        ]
+      }
+    },
     "scenarios": [
       {
         "id": "subscribed-broadcast",
@@ -21,6 +99,183 @@ window.visualLabData = {
         "flowId": "connect-send-receive",
         "tone": "recovered",
         "prompt": "두 브라우저 탭이 같은 topic을 구독한 뒤 한 탭에서 메시지를 보냅니다.",
+        "diagram": {
+          "caption": "main 데모의 native WebSocket STOMP 흐름입니다. raw frame 왕복과 두 탭 수신은 브라우저에서 수동 확인하며 자동 테스트는 demo page 접근만 보장합니다.",
+          "lanes": [
+            {
+              "id": "websocket-transport",
+              "label": "WebSocket transport",
+              "description": "두 탭은 STOMP frame을 보내기 전에 Origin 검사를 거쳐 /ws-chat transport를 각각 엽니다.",
+              "steps": [
+                {
+                  "from": "browserA",
+                  "to": "originGate",
+                  "verb": "handshake 요청",
+                  "payload": "GET Upgrade /ws-chat + Origin",
+                  "kind": "request",
+                  "concept": "WebSocket handshake",
+                  "codePointIds": [
+                    "websocket-config"
+                  ]
+                },
+                {
+                  "from": "originGate",
+                  "to": "websocketEndpoint",
+                  "verb": "Origin 허용",
+                  "payload": "Browser A WebSocket upgrade",
+                  "kind": "call"
+                },
+                {
+                  "from": "websocketEndpoint",
+                  "to": "browserA",
+                  "verb": "transport 연결",
+                  "payload": "WebSocket open",
+                  "kind": "response"
+                },
+                {
+                  "from": "browserB",
+                  "to": "originGate",
+                  "verb": "handshake 요청",
+                  "payload": "GET Upgrade /ws-chat + Origin",
+                  "kind": "request"
+                },
+                {
+                  "from": "originGate",
+                  "to": "websocketEndpoint",
+                  "verb": "Origin 허용",
+                  "payload": "Browser B WebSocket upgrade",
+                  "kind": "call"
+                },
+                {
+                  "from": "websocketEndpoint",
+                  "to": "browserB",
+                  "verb": "transport 연결",
+                  "payload": "WebSocket open",
+                  "kind": "response"
+                }
+              ]
+            },
+            {
+              "id": "stomp-session-subscription",
+              "label": "STOMP session + subscription",
+              "description": "/ws-chat 연결과 /topic/chat 구독은 다른 약속입니다. 각 탭은 CONNECTED 뒤 topic을 구독합니다.",
+              "steps": [
+                {
+                  "from": "browserA",
+                  "to": "stompRouter",
+                  "verb": "STOMP session 요청",
+                  "payload": "CONNECT frame · STOMP 1.2",
+                  "kind": "event"
+                },
+                {
+                  "from": "stompRouter",
+                  "to": "browserA",
+                  "verb": "session 준비 완료",
+                  "payload": "CONNECTED frame",
+                  "kind": "response"
+                },
+                {
+                  "from": "browserB",
+                  "to": "stompRouter",
+                  "verb": "STOMP session 요청",
+                  "payload": "CONNECT frame · STOMP 1.2",
+                  "kind": "event"
+                },
+                {
+                  "from": "stompRouter",
+                  "to": "browserB",
+                  "verb": "session 준비 완료",
+                  "payload": "CONNECTED frame",
+                  "kind": "response"
+                },
+                {
+                  "from": "browserA",
+                  "to": "subscriptionRegistry",
+                  "verb": "topic 구독",
+                  "payload": "SUBSCRIBE destination:/topic/chat",
+                  "kind": "event",
+                  "concept": "Subscription"
+                },
+                {
+                  "from": "browserB",
+                  "to": "subscriptionRegistry",
+                  "verb": "topic 구독",
+                  "payload": "SUBSCRIBE destination:/topic/chat",
+                  "kind": "event"
+                },
+                {
+                  "from": "subscriptionRegistry",
+                  "to": "simpleBroker",
+                  "verb": "수신자 집합 등록",
+                  "payload": "/topic/chat → Browser A + Browser B sessions",
+                  "kind": "config"
+                }
+              ]
+            },
+            {
+              "id": "send-broadcast",
+              "label": "SEND → broadcast",
+              "description": "/app destination은 Controller로, /topic destination은 구독자 fan-out으로 이어집니다.",
+              "steps": [
+                {
+                  "from": "browserA",
+                  "to": "stompRouter",
+                  "verb": "메시지 발행",
+                  "payload": "SEND destination:/app/chat.send + ChatMessage JSON",
+                  "kind": "event",
+                  "concept": "Application destination"
+                },
+                {
+                  "from": "stompRouter",
+                  "to": "webSocketController",
+                  "verb": "handler 호출",
+                  "payload": "@MessageMapping /chat.send + ChatMessage",
+                  "kind": "call",
+                  "codePointIds": [
+                    "topic-broadcast"
+                  ]
+                },
+                {
+                  "from": "webSocketController",
+                  "to": "simpleBroker",
+                  "verb": "broadcast 결과 발행",
+                  "payload": "@SendTo /topic/chat + ChatMessage",
+                  "kind": "event",
+                  "concept": "Broker destination"
+                },
+                {
+                  "from": "simpleBroker",
+                  "to": "subscriptionRegistry",
+                  "verb": "현재 구독자 조회",
+                  "payload": "/topic/chat",
+                  "kind": "call"
+                },
+                {
+                  "from": "subscriptionRegistry",
+                  "to": "simpleBroker",
+                  "verb": "구독 session 반환",
+                  "payload": "Browser A + Browser B",
+                  "kind": "response"
+                },
+                {
+                  "from": "simpleBroker",
+                  "to": "browserA",
+                  "verb": "구독자 fan-out",
+                  "payload": "MESSAGE frame + ChatMessage",
+                  "kind": "event"
+                },
+                {
+                  "from": "simpleBroker",
+                  "to": "browserB",
+                  "verb": "구독자 fan-out",
+                  "payload": "MESSAGE frame + ChatMessage",
+                  "kind": "event",
+                  "check": "두 탭 화면의 parsed sender/content와 DevTools raw frame 증거를 구분합니다."
+                }
+              ]
+            }
+          ]
+        },
         "route": [
           "Browser A",
           "/ws-chat",
@@ -62,6 +317,71 @@ window.visualLabData = {
         "flowId": "connect-send-receive",
         "tone": "blocked",
         "prompt": "CONNECTED frame을 확인하기 전에 subscribe 또는 send를 시도합니다.",
+        "diagram": {
+          "caption": "현재 main 데모는 CONNECTED 전에 send 버튼을 비활성화하고 CONNECTED를 받으면 자동 subscribe합니다. 이 diagram은 실제 UI가 조기 조작을 막는 경계를 보여줍니다.",
+          "lanes": [
+            {
+              "id": "connection-not-ready",
+              "label": "CONNECTING · operation blocked",
+              "description": "WebSocket transport가 열려도 STOMP CONNECTED를 받기 전에는 구독과 발행 준비가 끝난 것이 아닙니다.",
+              "steps": [
+                {
+                  "from": "browserA",
+                  "to": "originGate",
+                  "verb": "handshake 요청",
+                  "payload": "GET Upgrade /ws-chat + Origin",
+                  "kind": "request"
+                },
+                {
+                  "from": "originGate",
+                  "to": "websocketEndpoint",
+                  "verb": "Origin 허용",
+                  "payload": "WebSocket upgrade",
+                  "kind": "call"
+                },
+                {
+                  "from": "websocketEndpoint",
+                  "to": "browserA",
+                  "verb": "transport 연결",
+                  "payload": "WebSocket open",
+                  "kind": "response"
+                },
+                {
+                  "from": "browserA",
+                  "to": "stompRouter",
+                  "verb": "STOMP session 요청",
+                  "payload": "CONNECT frame · CONNECTING",
+                  "kind": "event"
+                },
+                {
+                  "from": "browserA",
+                  "to": "demoUiGuard",
+                  "verb": "조기 send 시도",
+                  "payload": "connection state != CONNECTED",
+                  "kind": "call"
+                },
+                {
+                  "from": "demoUiGuard",
+                  "to": "browserA",
+                  "verb": "조작 차단",
+                  "payload": "sendButton disabled",
+                  "kind": "failure",
+                  "check": "main 데모에서는 조기 SEND frame이 서버까지 전달되지 않습니다."
+                }
+              ]
+            }
+          ],
+          "notReached": [
+            {
+              "label": "Subscription registry",
+              "reason": "CONNECTED 처리 전이라 /topic/chat 구독을 만들지 않습니다."
+            },
+            {
+              "label": "WebSocketController · Simple Broker",
+              "reason": "SEND가 UI에서 차단되어 application destination과 broadcast 경계에 도달하지 않습니다."
+            }
+          ]
+        },
         "route": [
           "Browser",
           "/ws-chat",
@@ -99,6 +419,116 @@ window.visualLabData = {
         "flowId": "connect-send-receive",
         "tone": "warning",
         "prompt": "발신 탭은 연결만 하고, 두 번째 탭만 /topic/chat을 구독한 상태에서 메시지를 보냅니다.",
+        "diagram": {
+          "caption": "send와 receive가 별도 계약임을 보여주는 개념·수동 시나리오입니다. 현재 main 데모는 CONNECTED 뒤 자동 subscribe하므로 수정 없는 기본 UI만으로 발신 탭 미구독 상태를 만들 수 없습니다.",
+          "lanes": [
+            {
+              "id": "sender-session-and-send",
+              "label": "Browser A · send only",
+              "description": "별도 STOMP client를 가정해 Browser A는 session만 만든 뒤 topic 구독 없이 application destination으로 보냅니다.",
+              "steps": [
+                {
+                  "from": "browserA",
+                  "to": "originGate",
+                  "verb": "handshake 요청",
+                  "payload": "GET Upgrade /ws-chat + Origin",
+                  "kind": "request"
+                },
+                {
+                  "from": "originGate",
+                  "to": "websocketEndpoint",
+                  "verb": "Origin 허용",
+                  "payload": "WebSocket upgrade",
+                  "kind": "call"
+                },
+                {
+                  "from": "browserA",
+                  "to": "stompRouter",
+                  "verb": "STOMP session 요청",
+                  "payload": "CONNECT frame",
+                  "kind": "event"
+                },
+                {
+                  "from": "stompRouter",
+                  "to": "browserA",
+                  "verb": "session 준비 완료",
+                  "payload": "CONNECTED frame",
+                  "kind": "response"
+                },
+                {
+                  "from": "browserA",
+                  "to": "stompRouter",
+                  "verb": "구독 없이 메시지 발행",
+                  "payload": "SEND /app/chat.send + ChatMessage JSON",
+                  "kind": "event"
+                },
+                {
+                  "from": "stompRouter",
+                  "to": "webSocketController",
+                  "verb": "handler 호출",
+                  "payload": "ChatMessage",
+                  "kind": "call"
+                },
+                {
+                  "from": "webSocketController",
+                  "to": "simpleBroker",
+                  "verb": "topic으로 발행",
+                  "payload": "/topic/chat + ChatMessage",
+                  "kind": "event"
+                }
+              ]
+            },
+            {
+              "id": "subscriber-only-fanout",
+              "label": "Browser B · subscribed receiver",
+              "description": "Broker는 발신자 여부가 아니라 현재 topic 구독 session만 수신자로 선택합니다.",
+              "steps": [
+                {
+                  "from": "browserB",
+                  "to": "subscriptionRegistry",
+                  "verb": "topic 구독",
+                  "payload": "SUBSCRIBE destination:/topic/chat",
+                  "kind": "event"
+                },
+                {
+                  "from": "subscriptionRegistry",
+                  "to": "simpleBroker",
+                  "verb": "수신 session 등록",
+                  "payload": "/topic/chat → Browser B only",
+                  "kind": "config"
+                },
+                {
+                  "from": "simpleBroker",
+                  "to": "subscriptionRegistry",
+                  "verb": "topic 구독자 조회",
+                  "payload": "/topic/chat",
+                  "kind": "call"
+                },
+                {
+                  "from": "subscriptionRegistry",
+                  "to": "simpleBroker",
+                  "verb": "수신자 반환",
+                  "payload": "Browser B session",
+                  "kind": "response"
+                },
+                {
+                  "from": "simpleBroker",
+                  "to": "browserB",
+                  "verb": "구독자 fan-out",
+                  "payload": "MESSAGE frame + ChatMessage",
+                  "kind": "event",
+                  "check": "이 상태는 기본 main 데모가 아니라 별도 client 또는 수정된 페이지로 수동 재현합니다."
+                }
+              ]
+            }
+          ],
+          "notReached": [
+            {
+              "label": "Browser A receive",
+              "reason": "발신 사실만으로 수신자가 되지 않으며 Browser A session은 /topic/chat을 구독하지 않았습니다."
+            }
+          ]
+        },
         "route": [
           "Browser A",
           "/ws-chat",
@@ -137,6 +567,51 @@ window.visualLabData = {
         "flowId": "connect-send-receive",
         "tone": "blocked",
         "prompt": "브라우저 Origin이 APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS에 포함되지 않은 상태로 연결합니다.",
+        "diagram": {
+          "caption": "Origin은 STOMP 이전의 HTTP Upgrade 경계에서 검사됩니다. 거절되면 WebSocket transport와 STOMP session이 모두 만들어지지 않습니다.",
+          "lanes": [
+            {
+              "id": "origin-rejection",
+              "label": "Handshake rejected",
+              "description": "실제 프런트 Origin과 환경 설정의 허용 패턴이 다르면 /ws-chat upgrade 전에 중단됩니다.",
+              "steps": [
+                {
+                  "from": "browserA",
+                  "to": "originGate",
+                  "verb": "handshake 요청",
+                  "payload": "GET Upgrade /ws-chat + disallowed Origin",
+                  "kind": "request",
+                  "codePointIds": [
+                    "websocket-config"
+                  ]
+                },
+                {
+                  "from": "originGate",
+                  "to": "browserA",
+                  "verb": "Origin 불일치 거절",
+                  "payload": "no WebSocket upgrade",
+                  "kind": "failure",
+                  "concept": "Allowed Origin",
+                  "check": "STOMP CONNECTED 실패가 아니라 그 이전 transport handshake 실패입니다."
+                }
+              ]
+            }
+          ],
+          "notReached": [
+            {
+              "label": "WebSocket endpoint",
+              "reason": "허용 Origin 검사를 통과하지 못해 transport session이 생성되지 않습니다."
+            },
+            {
+              "label": "STOMP router · Subscription registry",
+              "reason": "WebSocket 연결이 없으므로 CONNECT와 SUBSCRIBE frame을 보낼 수 없습니다."
+            },
+            {
+              "label": "WebSocketController · Simple Broker",
+              "reason": "application destination과 topic broadcast에 도달하지 않습니다."
+            }
+          ]
+        },
         "route": [
           "Browser",
           "Origin check",
