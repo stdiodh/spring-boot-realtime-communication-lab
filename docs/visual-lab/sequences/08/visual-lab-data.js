@@ -2,474 +2,432 @@ window.visualLabData = {
   "kind": "sequence",
   "sequence": "08",
   "title": "Realtime WebSocket",
-  "subtitle": "Realtime communication",
-  "goal": "WebSocket 연결, STOMP 경로, topic 구독, server broadcast 흐름을 가장 작은 실시간 메시지 예제로 이해합니다.",
-  "problem": "HTTP는 클라이언트가 요청을 보내고 서버가 응답하는 구조라 채팅이나 알림처럼 서버가 다시 보내는 흐름을 설명하기 어렵습니다.",
+  "subtitle": "Connection, subscription and fan-out",
+  "goal": "WebSocket transport와 STOMP messaging을 분리하고, 연결·구독 조건만 보고 실제 메시지 수신자를 예측합니다.",
+  "problem": "HTTP 요청이 올 때만 응답하면 서버에서 새로 생긴 메시지를 연결된 화면에 즉시 전달하는 흐름을 설명하기 어렵습니다.",
   "repo": {
     "name": "spring-boot-realtime-communication-lab",
     "path": "spring-boot-realtime-communication-lab"
   },
-  "defaultSequence": "08",
+  "workbench": {
+    "kind": "realtime",
+    "title": "Guided Connection & Fan-out Story",
+    "instruction": "transport, STOMP session, topic subscription의 입력 상태를 읽고 누가 MESSAGE를 받을지 먼저 예측하세요.",
+    "story": {
+      "invariant": "WebSocket 연결은 통로를 열고, STOMP 구독은 그 통로에서 어떤 topic 메시지를 받을지 등록합니다.",
+      "scope": "main 데모는 native WebSocket으로 STOMP frame을 직접 주고받습니다. 자동 테스트는 데모 페이지 접근만 확인하며 실제 connect·subscribe·send·receive 왕복은 브라우저 수동 증거입니다."
+    },
+    "terms": [
+      {
+        "term": "WebSocket transport",
+        "meaning": "/ws-chat에서 열리는 유지 연결입니다. transport가 OPEN이어도 STOMP session 준비와 topic 구독은 아직 별도 상태입니다."
+      },
+      {
+        "term": "STOMP messaging",
+        "meaning": "CONNECT, SUBSCRIBE, SEND, MESSAGE frame과 destination 규칙입니다. WebSocket 위에서 동작하지만 연결 자체와 같은 개념이 아닙니다."
+      },
+      {
+        "term": "/app와 /topic",
+        "meaning": "/app/chat.send는 서버 handler로 보내는 경로이고 /topic/chat은 broker가 현재 구독자에게 전달하는 경로입니다."
+      },
+      {
+        "term": "Origin과 인증",
+        "meaning": "Origin allowlist는 handshake 출처를 제한합니다. 사용자의 신원과 권한을 확인하는 인증·인가는 별도 정책입니다."
+      }
+    ],
+    "visual": {
+      "src": "../../assets/diagrams/08-connection-subscription-fanout.svg",
+      "alt": "브라우저 A와 B가 /ws-chat WebSocket transport를 열고 STOMP CONNECTED 뒤 /topic/chat을 구독하는 계층도. Browser A가 /app/chat.send로 보낸 ChatMessage가 Controller와 broker를 지나 현재 구독자인 A와 B에게 fan-out되며, 연결만 하고 구독하지 않은 session은 수신자에 포함되지 않는다.",
+      "caption": "연결된 client 목록이 아니라 topic subscription registry가 실제 MESSAGE 수신자를 결정합니다. Origin gate는 transport 앞에 있지만 사용자 인증을 대신하지 않습니다."
+    },
+    "comparison": {
+      "label": "연결과 구독은 서로 다른 완료 조건입니다",
+      "left": {
+        "title": "Connected · 통로가 열림",
+        "body": "WebSocket OPEN과 STOMP CONNECTED는 frame을 주고받을 session이 준비됐다는 뜻입니다. 특정 topic의 수신자라는 뜻은 아닙니다."
+      },
+      "right": {
+        "title": "Subscribed · 수신자로 등록",
+        "body": "SUBSCRIBE destination:/topic/chat이 registry에 등록돼야 broker가 해당 session을 MESSAGE fan-out 대상에 포함합니다."
+      }
+    },
+    "nodes": {
+      "browserA": {
+        "label": "Browser A",
+        "icon": "client",
+        "kind": "STOMP client",
+        "role": "native WebSocket으로 frame을 보내는 발신 session입니다.",
+        "boundary": "Browser",
+        "codePointIds": ["native-demo"]
+      },
+      "browserB": {
+        "label": "Browser B",
+        "icon": "client",
+        "kind": "STOMP client",
+        "role": "같은 topic을 구독할 수 있는 별도 session입니다.",
+        "boundary": "Browser"
+      },
+      "originGate": {
+        "label": "Origin gate",
+        "icon": "security",
+        "kind": "handshake gate",
+        "role": "HTTP Upgrade 전에 브라우저 Origin과 허용 패턴을 비교합니다.",
+        "boundary": "Handshake",
+        "codePointIds": ["websocket-config"]
+      },
+      "websocketEndpoint": {
+        "label": "/ws-chat endpoint",
+        "icon": "websocket",
+        "kind": "transport endpoint",
+        "role": "native WebSocket transport를 엽니다.",
+        "boundary": "WebSocket",
+        "codePointIds": ["websocket-config"]
+      },
+      "stompRouter": {
+        "label": "STOMP router",
+        "icon": "handler",
+        "kind": "message router",
+        "role": "CONNECT, SUBSCRIBE, SEND destination을 해석합니다.",
+        "boundary": "STOMP"
+      },
+      "demoUiGuard": {
+        "label": "Demo UI guard",
+        "icon": "gate",
+        "kind": "client guard",
+        "role": "CONNECTED 전 send를 비활성화하고 CONNECTED 뒤 자동 구독합니다.",
+        "boundary": "Browser UI",
+        "codePointIds": ["native-demo"]
+      },
+      "webSocketController": {
+        "label": "WebSocketController",
+        "icon": "api",
+        "kind": "message handler",
+        "role": "/app/chat.send의 ChatMessage를 받아 /topic/chat 결과를 반환합니다.",
+        "boundary": "Application messaging",
+        "codePointIds": ["topic-broadcast"]
+      },
+      "subscriptionRegistry": {
+        "label": "Subscription registry",
+        "icon": "broker",
+        "kind": "subscription registry",
+        "role": "/topic/chat을 구독한 session 집합을 유지합니다.",
+        "boundary": "Broker"
+      },
+      "simpleBroker": {
+        "label": "Simple Broker",
+        "icon": "broker",
+        "kind": "topic broker",
+        "role": "현재 topic 구독자에게 MESSAGE frame을 fan-out합니다.",
+        "boundary": "Broker",
+        "codePointIds": ["websocket-config", "topic-broadcast"]
+      }
+    },
+    "scenarios": [
+      {
+        "id": "two-subscribers",
+        "label": "두 탭 CONNECTED · 두 탭 구독",
+        "flowId": "message-flow",
+        "tone": "recovered",
+        "prompt": "Browser A와 B가 각각 STOMP CONNECTED 상태이고 두 session 모두 /topic/chat을 구독했습니다.",
+        "observationTitle": "현재 두 구독 session으로 MESSAGE를 fan-out하는 경로",
+        "prediction": {
+          "prompt": "Browser A가 /app/chat.send로 ChatMessage를 보내면 어느 탭이 MESSAGE를 받을까요?",
+          "options": [
+            { "id": "both", "label": "topic을 구독한 Browser A와 B 모두 받는다" },
+            { "id": "sender-only", "label": "메시지를 보낸 Browser A만 받는다" },
+            { "id": "other-only", "label": "발신자가 아닌 Browser B만 받는다" }
+          ],
+          "answer": "both",
+          "explanation": "broker는 발신자 여부가 아니라 /topic/chat의 현재 subscription 집합을 기준으로 수신자를 선택합니다."
+        },
+        "diagram": {
+          "caption": "Browser A의 SEND가 Controller와 broker를 지나 /topic/chat을 구독한 Browser A와 B 두 session에 MESSAGE로 전달됩니다.",
+          "lanes": [
+            {
+              "id": "two-subscriber-fanout",
+              "label": "SEND → handler → subscriber fan-out",
+              "description": "연결과 구독이 이미 준비된 뒤 메시지 하나가 두 구독자로 나뉘는 일곱 전이입니다.",
+              "steps": [
+                { "from": "browserA", "to": "stompRouter", "verb": "메시지 발행", "payload": "SEND destination:/app/chat.send · ChatMessage JSON", "kind": "event", "concept": "Application destination", "codePointIds": ["native-demo"] },
+                { "from": "stompRouter", "to": "webSocketController", "verb": "handler 라우팅", "payload": "@MessageMapping /chat.send", "kind": "call", "codePointIds": ["topic-broadcast"] },
+                { "from": "webSocketController", "to": "simpleBroker", "verb": "topic 결과 발행", "payload": "@SendTo /topic/chat · ChatMessage", "kind": "event", "concept": "Broker destination" },
+                { "from": "simpleBroker", "to": "subscriptionRegistry", "verb": "현재 구독자 조회", "payload": "/topic/chat", "kind": "call" },
+                { "from": "subscriptionRegistry", "to": "simpleBroker", "verb": "수신 session 반환", "payload": "Browser A + Browser B", "kind": "response", "concept": "구독자가 수신자를 결정합니다." },
+                { "from": "simpleBroker", "to": "browserA", "verb": "구독자 전달", "payload": "MESSAGE frame · ChatMessage", "kind": "event" },
+                { "from": "simpleBroker", "to": "browserB", "verb": "구독자 전달", "payload": "MESSAGE frame · ChatMessage", "kind": "event", "check": "페이지에는 parsed sender/content가 보이고 raw MESSAGE frame은 DevTools에서 확인합니다." }
+              ]
+            }
+          ]
+        },
+        "route": ["Browser A", "STOMP router", "WebSocketController", "Simple Broker", "Subscription registry", "Browser A", "Browser B"],
+        "snapshot": [
+          { "label": "Transport", "value": "A·B WebSocket OPEN", "tone": "recovered" },
+          { "label": "Subscription", "value": "A·B /topic/chat", "tone": "signal" },
+          { "label": "수신자", "value": "A + B", "tone": "recovered" }
+        ],
+        "fanOut": ["Browser A", "Browser B"],
+        "evidenceType": "브라우저 수동 왕복 · 자동 테스트는 페이지 접근만",
+        "evidence": "두 데모 탭의 화면에서 parsed sender/content를 확인하고, raw STOMP MESSAGE frame이 필요하면 DevTools에서 별도로 확인합니다. 자동 테스트는 이 왕복을 증명하지 않습니다.",
+        "outcome": "연결된 탭 전체가 아니라 해당 topic을 구독한 session 집합이 fan-out 수신자입니다.",
+        "reflection": {
+          "prompt": "발신자 여부와 구독 여부 중 무엇이 수신자를 결정하는지 규칙으로 적어보세요.",
+          "transfer": "세 번째 탭이 연결만 하고 구독하지 않았다면 같은 MESSAGE를 받을까요?"
+        }
+      },
+      {
+        "id": "transport-open-session-pending",
+        "label": "WebSocket OPEN · STOMP 응답 전",
+        "flowId": "session-flow",
+        "tone": "blocked",
+        "prompt": "WebSocket open event는 발생했지만 아직 STOMP CONNECTED frame을 받지 못했습니다.",
+        "observationTitle": "transport는 열렸지만 데모 UI가 조기 SEND를 막는 경로",
+        "prediction": {
+          "prompt": "이 상태에서 main 데모의 Send 버튼과 /topic/chat 구독은 어떻게 될까요?",
+          "options": [
+            { "id": "guarded", "label": "Send는 비활성이고 CONNECTED 뒤에야 자동 구독한다" },
+            { "id": "ready", "label": "WebSocket OPEN만으로 Send와 topic 수신이 모두 준비된다" },
+            { "id": "auto-message", "label": "서버가 CONNECTED 전에 MESSAGE를 먼저 보낸다" }
+          ],
+          "answer": "guarded",
+          "explanation": "transport OPEN은 STOMP session 준비 완료가 아닙니다. main 데모는 CONNECTED를 받은 뒤 SUBSCRIBE를 보내고 Send를 활성화합니다."
+        },
+        "diagram": {
+          "caption": "Origin 검사를 통과해 WebSocket은 열렸지만 STOMP CONNECTED 전이라 main 데모의 UI guard가 SEND를 서버로 보내지 않습니다.",
+          "lanes": [
+            {
+              "id": "session-pending-path",
+              "label": "Handshake → OPEN → CONNECT pending",
+              "description": "transport 상태와 STOMP messaging 준비 상태가 다른 여섯 전이입니다.",
+              "steps": [
+                { "from": "browserA", "to": "originGate", "verb": "handshake 요청", "payload": "GET Upgrade /ws-chat · Origin", "kind": "request", "codePointIds": ["websocket-config"] },
+                { "from": "originGate", "to": "websocketEndpoint", "verb": "Origin 허용", "payload": "WebSocket upgrade", "kind": "call", "concept": "출처 검사는 인증이 아닙니다." },
+                { "from": "websocketEndpoint", "to": "browserA", "verb": "transport 열기", "payload": "WebSocket OPEN", "kind": "response", "concept": "Transport ready" },
+                { "from": "browserA", "to": "stompRouter", "verb": "session 요청", "payload": "CONNECT frame · CONNECTED 대기", "kind": "event" },
+                { "from": "browserA", "to": "demoUiGuard", "verb": "조기 SEND 시도", "payload": "state != CONNECTED", "kind": "call", "codePointIds": ["native-demo"] },
+                { "from": "demoUiGuard", "to": "browserA", "verb": "조작 차단", "payload": "sendButton disabled", "kind": "failure", "check": "main 데모에서는 CONNECTED 전 SEND frame이 서버에 도달하지 않습니다." }
+              ]
+            }
+          ],
+          "notReached": [
+            { "label": "Subscription registry", "reason": "CONNECTED 처리 뒤 자동 SUBSCRIBE가 아직 실행되지 않았습니다." },
+            { "label": "WebSocketController · Simple Broker", "reason": "UI guard가 SEND를 막아 application destination과 topic에 도달하지 않습니다." }
+          ]
+        },
+        "route": ["Browser A", "Origin gate", "/ws-chat", "Browser A", "STOMP router", "Demo UI guard"],
+        "snapshot": [
+          { "label": "WebSocket", "value": "OPEN", "tone": "recovered" },
+          { "label": "STOMP", "value": "CONNECTED 대기", "tone": "warning" },
+          { "label": "Send", "value": "UI에서 비활성", "tone": "blocked" }
+        ],
+        "evidenceType": "main 데모 UI 코드 · 브라우저 수동 상태 확인",
+        "evidence": "realtime-demo.html은 CONNECTED frame 처리 뒤에 SUBSCRIBE를 보내고 Send 버튼을 활성화합니다. 브라우저에서 상태 문구와 비활성 버튼을 확인합니다.",
+        "outcome": "WebSocket OPEN, STOMP CONNECTED, topic SUBSCRIBED는 서로 다른 완료 조건입니다.",
+        "reflection": {
+          "prompt": "transport OPEN과 messaging 준비 완료의 차이를 한 문장으로 적어보세요.",
+          "transfer": "직접 만든 다른 client가 UI guard 없이 CONNECTED 전에 SEND를 보내면 어떤 실패 처리가 필요할까요?"
+        }
+      },
+      {
+        "id": "only-b-subscribed",
+        "label": "두 탭 CONNECTED · B만 구독",
+        "flowId": "message-flow",
+        "tone": "warning",
+        "prompt": "Browser A와 B는 연결됐지만 /topic/chat subscription은 Browser B session에만 있습니다.",
+        "observationTitle": "발신자가 아니라 유일한 구독자 B만 수신하는 경로",
+        "prediction": {
+          "prompt": "구독하지 않은 Browser A가 SEND하면 어느 탭이 MESSAGE를 받을까요?",
+          "options": [
+            { "id": "b-only", "label": "유일한 구독 session인 Browser B만 받는다" },
+            { "id": "a-only", "label": "발신자인 Browser A만 받는다" },
+            { "id": "both-connected", "label": "연결된 Browser A와 B 모두 받는다" }
+          ],
+          "answer": "b-only",
+          "explanation": "SEND 경로와 RECEIVE subscription은 별도 계약입니다. broker는 /topic/chat에 등록된 Browser B만 선택합니다."
+        },
+        "diagram": {
+          "caption": "Browser A가 메시지를 보내도 /topic/chat을 구독한 session은 Browser B뿐이므로 broker는 B에게만 MESSAGE를 전달합니다.",
+          "lanes": [
+            {
+              "id": "subscriber-b-path",
+              "label": "Send from A → receive at subscribed B",
+              "description": "발신자와 실제 수신자가 달라지는 일곱 전이의 개념·수동 비교입니다.",
+              "steps": [
+                { "from": "browserB", "to": "subscriptionRegistry", "verb": "topic 구독", "payload": "SUBSCRIBE destination:/topic/chat", "kind": "event", "concept": "Browser B만 등록" },
+                { "from": "browserA", "to": "stompRouter", "verb": "구독 없이 발행", "payload": "SEND /app/chat.send · ChatMessage", "kind": "event" },
+                { "from": "stompRouter", "to": "webSocketController", "verb": "handler 라우팅", "payload": "@MessageMapping /chat.send", "kind": "call", "codePointIds": ["topic-broadcast"] },
+                { "from": "webSocketController", "to": "simpleBroker", "verb": "topic 결과 발행", "payload": "@SendTo /topic/chat", "kind": "event" },
+                { "from": "simpleBroker", "to": "subscriptionRegistry", "verb": "현재 구독자 조회", "payload": "/topic/chat", "kind": "call" },
+                { "from": "subscriptionRegistry", "to": "simpleBroker", "verb": "수신 session 반환", "payload": "Browser B only", "kind": "response" },
+                { "from": "simpleBroker", "to": "browserB", "verb": "구독자 전달", "payload": "MESSAGE frame · ChatMessage", "kind": "event", "check": "현재 main 데모는 CONNECTED 뒤 자동 구독하므로 수정 없는 기본 UI로는 이 상태를 만들 수 없습니다." }
+              ]
+            }
+          ],
+          "notReached": [
+            { "label": "Browser A receive", "reason": "Browser A session은 /topic/chat subscription registry에 등록되지 않았습니다." }
+          ]
+        },
+        "route": ["Browser B", "Subscription registry", "Browser A", "STOMP router", "WebSocketController", "Simple Broker", "Browser B"],
+        "snapshot": [
+          { "label": "연결 session", "value": "A + B", "tone": "recovered" },
+          { "label": "topic 구독", "value": "B only", "tone": "warning" },
+          { "label": "MESSAGE 수신", "value": "B only", "tone": "signal" }
+        ],
+        "fanOut": ["Browser B"],
+        "evidenceType": "개념 비교 · 별도 client 수동 실험",
+        "evidence": "이 조건은 connected와 subscribed를 분리하는 사고 실험입니다. main 데모는 CONNECTED 뒤 자동 구독하므로 수정 없는 기본 페이지에서 재현된다고 주장하지 않습니다.",
+        "outcome": "연결은 메시지를 보낼 통로를 주지만 특정 topic의 실제 수신자 등록은 subscription이 결정합니다.",
+        "reflection": {
+          "prompt": "왜 발신자 A가 자신의 메시지를 받지 못하는지 subscription을 주어로 적어보세요.",
+          "transfer": "A가 SEND 직전에 /topic/chat을 구독하면 수신자 집합은 어떻게 바뀔까요?"
+        }
+      },
+      {
+        "id": "origin-mismatch",
+        "label": "브라우저 Origin · 허용 패턴 불일치",
+        "flowId": "session-flow",
+        "tone": "blocked",
+        "prompt": "브라우저가 보낸 Origin이 APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS와 일치하지 않습니다.",
+        "observationTitle": "STOMP보다 앞선 handshake 경계에서 transport가 열리지 않는 경로",
+        "prediction": {
+          "prompt": "Origin이 허용되지 않으면 STOMP CONNECTED와 사용자 인증은 어떻게 될까요?",
+          "options": [
+            { "id": "handshake-stop", "label": "WebSocket handshake에서 멈춰 STOMP session 자체가 생기지 않는다" },
+            { "id": "auth-fail", "label": "WebSocket은 연결되고 사용자 비밀번호 인증만 실패한다" },
+            { "id": "topic-only", "label": "연결과 SEND는 되고 topic 구독만 거부된다" }
+          ],
+          "answer": "handshake-stop",
+          "explanation": "Origin 검사는 WebSocket transport를 열기 전 handshake 조건입니다. 사용자 신원을 검사하는 인증 실패와 같은 사건이 아닙니다."
+        },
+        "diagram": {
+          "caption": "허용 패턴과 다른 Origin은 handshake에서 거부되어 /ws-chat transport, STOMP CONNECTED, subscription, broadcast에 도달하지 않습니다.",
+          "lanes": [
+            {
+              "id": "origin-rejected-path",
+              "label": "Origin mismatch → handshake rejected",
+              "description": "메시징 계층보다 앞선 transport gate에서 멈추는 두 전이입니다.",
+              "steps": [
+                { "from": "browserA", "to": "originGate", "verb": "handshake 요청", "payload": "GET Upgrade /ws-chat · disallowed Origin", "kind": "request", "codePointIds": ["websocket-config"] },
+                { "from": "originGate", "to": "browserA", "verb": "transport 거부", "payload": "WebSocket connection error", "kind": "failure", "concept": "Origin allowlist ≠ authentication", "check": "실제 브라우저 Origin과 환경 설정 값을 비교합니다." }
+              ]
+            }
+          ],
+          "notReached": [
+            { "label": "/ws-chat WebSocket session", "reason": "허용 Origin 검사를 통과하지 못해 transport가 생성되지 않습니다." },
+            { "label": "STOMP router · Subscription registry", "reason": "WebSocket 연결이 없어 CONNECT와 SUBSCRIBE frame을 보낼 수 없습니다." },
+            { "label": "WebSocketController · Simple Broker", "reason": "application destination과 topic broadcast에 도달하지 않습니다." }
+          ]
+        },
+        "route": ["Browser A", "Origin gate"],
+        "snapshot": [
+          { "label": "Origin", "value": "허용 패턴 불일치", "tone": "blocked" },
+          { "label": "WebSocket", "value": "연결되지 않음", "tone": "blocked" },
+          { "label": "STOMP session", "value": "생성되지 않음", "tone": "warning" }
+        ],
+        "stopAfter": 1,
+        "evidenceType": "설정 코드 + 브라우저 연결 상태 수동 확인",
+        "evidence": "WebSocketConfig의 allowedOriginPatterns와 실제 브라우저 Origin을 비교하고 브라우저 연결 오류를 확인합니다. 이 증거는 사용자 인증 여부를 설명하지 않습니다.",
+        "outcome": "Origin allowlist는 transport 출처 제한입니다. 실습용 permitAll과 별개로 운영 인증·인가는 추가 설계해야 합니다.",
+        "reflection": {
+          "prompt": "Origin 검사와 사용자 인증이 답하는 질문을 각각 적어보세요.",
+          "transfer": "허용 Origin에서 접속한 익명 사용자가 민감한 topic을 구독하지 못하게 하려면 어떤 별도 정책이 필요할까요?"
+        }
+      }
+    ]
+  },
   "actors": [
-    {
-      "id": "browser",
-      "label": "Browser Client",
-      "kind": "client"
-    },
-    {
-      "id": "endpoint",
-      "label": "WebSocket Endpoint",
-      "kind": "server"
-    },
-    {
-      "id": "controller",
-      "label": "WebSocketController",
-      "kind": "server"
-    },
-    {
-      "id": "broker",
-      "label": "STOMP Broker",
-      "kind": "queue"
-    },
-    {
-      "id": "subscribers",
-      "label": "Subscribers",
-      "kind": "client"
-    }
+    { "id": "browser", "label": "Browser client", "kind": "client" },
+    { "id": "transport", "label": "WebSocket transport", "kind": "server" },
+    { "id": "router", "label": "STOMP router", "kind": "server" },
+    { "id": "broker", "label": "Simple Broker", "kind": "queue" },
+    { "id": "subscriber", "label": "Subscribed session", "kind": "client" }
   ],
   "flows": [
     {
-      "id": "connect-send-receive",
-      "title": "connect / subscribe / send / receive",
-      "summary": "클라이언트가 연결을 만들고 topic을 구독한 뒤 메시지를 보내면 서버가 구독자에게 다시 broadcast합니다.",
-      "mermaid": "sequenceDiagram\n  actor ClientA\n  actor ClientB\n  participant WS as WebSocket endpoint\n  participant Broker as STOMP broker\n  participant Controller as WebSocketController\n  ClientA->>WS: connect\n  ClientA->>Broker: subscribe /topic/chat\n  ClientB->>WS: connect\n  ClientB->>Broker: subscribe /topic/chat\n  ClientA->>Controller: send /app/chat.send\n  Controller->>Broker: publish /topic/chat\n  Broker-->>ClientA: message\n  Broker-->>ClientB: message",
+      "id": "session-flow",
+      "title": "transport와 STOMP session 준비",
+      "summary": "Origin handshake, WebSocket OPEN, STOMP CONNECTED, SUBSCRIBE는 서로 다른 완료 조건입니다.",
       "steps": [
-        {
-          "order": 1,
-          "actor": "Client",
-          "input": "Connect request",
-          "owner": "WebSocket endpoint",
-          "action": "HTTP 요청/응답과 다른 연결을 엽니다.",
-          "output": "Open connection",
-          "note": "실시간 메시지는 연결이 유지된 상태에서 주고받습니다.",
-          "id": "connect-send-receive-step-1",
-          "from": "Client",
-          "to": "WebSocket endpoint",
-          "message": "HTTP 요청/응답과 다른 연결을 엽니다.",
-          "messageKind": "request",
-          "problem": "Connect request",
-          "concept": "WebSocket endpoint",
-          "check": "Open connection",
-          "codePointIds": [
-            "websocket-config",
-            "topic-broadcast"
-          ]
-        },
-        {
-          "order": 2,
-          "actor": "Client",
-          "input": "subscribe /topic/chat",
-          "owner": "STOMP broker",
-          "action": "서버가 publish할 topic을 구독합니다.",
-          "output": "Subscription",
-          "note": "받는 경로는 `/topic`으로 읽습니다.",
-          "id": "connect-send-receive-step-2",
-          "from": "Client",
-          "to": "STOMP broker",
-          "message": "서버가 publish할 topic을 구독합니다.",
-          "messageKind": "event",
-          "problem": "subscribe /topic/chat",
-          "concept": "STOMP broker",
-          "check": "Subscription",
-          "codePointIds": [
-            "topic-broadcast",
-            "websocket-config"
-          ]
-        },
-        {
-          "order": 3,
-          "actor": "Client",
-          "input": "send /app/chat.send",
-          "owner": "WebSocketController",
-          "action": "메시지를 서버 controller로 보냅니다.",
-          "output": "ChatMessage",
-          "note": "보내는 경로는 `/app`으로 읽습니다.",
-          "id": "connect-send-receive-step-3",
-          "from": "Client",
-          "to": "WebSocketController",
-          "message": "메시지를 서버 controller로 보냅니다.",
-          "messageKind": "event",
-          "problem": "send /app/chat.send",
-          "concept": "WebSocketController",
-          "check": "ChatMessage",
-          "codePointIds": [
-            "websocket-config",
-            "topic-broadcast"
-          ]
-        },
-        {
-          "order": 4,
-          "actor": "WebSocketController",
-          "input": "ChatMessage",
-          "owner": "STOMP broker",
-          "action": "topic 구독자에게 메시지를 publish합니다.",
-          "output": "Broadcast message",
-          "note": "서버가 연결된 여러 클라이언트에게 다시 보냅니다.",
-          "id": "connect-send-receive-step-4",
-          "from": "WebSocketController",
-          "to": "STOMP broker",
-          "message": "topic 구독자에게 메시지를 publish합니다.",
-          "messageKind": "event",
-          "problem": "ChatMessage",
-          "concept": "STOMP broker",
-          "check": "Broadcast message",
-          "codePointIds": [
-            "topic-broadcast",
-            "websocket-config"
-          ]
-        },
-        {
-          "order": 5,
-          "actor": "Subscribed clients",
-          "input": "Broadcast message",
-          "owner": "Browser test page",
-          "action": "구독 중인 화면에서 메시지를 받습니다.",
-          "output": "Rendered message",
-          "note": "브라우저 탭 두 개로 같은 topic 수신을 확인할 수 있습니다.",
-          "id": "connect-send-receive-step-5",
-          "from": "Subscribed clients",
-          "to": "Browser test page",
-          "message": "구독 중인 화면에서 메시지를 받습니다.",
-          "messageKind": "event",
-          "problem": "Broadcast message",
-          "concept": "Browser test page",
-          "check": "Rendered message",
-          "codePointIds": [
-            "websocket-config",
-            "topic-broadcast"
-          ]
-        }
-      ],
-      "bandKind": "scenario"
+        { "id": "session-1", "from": "Browser", "to": "Origin gate", "problem": "transport를 열기 전 출처 조건을 확인합니다.", "concept": "Origin allowlist", "action": "HTTP Upgrade와 Origin을 비교합니다.", "check": "허용 패턴과 실제 Origin을 비교합니다.", "codePointIds": ["websocket-config"] },
+        { "id": "session-2", "from": "Origin gate", "to": "/ws-chat", "problem": "허용 조건을 통과해야 연결이 생깁니다.", "concept": "WebSocket handshake", "action": "native WebSocket transport를 엽니다.", "check": "브라우저 open/close/error 상태를 확인합니다." },
+        { "id": "session-3", "from": "Browser", "to": "STOMP router", "problem": "OPEN만으로 messaging 준비가 끝나지 않습니다.", "concept": "STOMP CONNECT", "action": "CONNECT frame을 보냅니다.", "check": "CONNECTED frame을 받았는지 확인합니다.", "codePointIds": ["native-demo"] },
+        { "id": "session-4", "from": "Browser", "to": "Subscription registry", "problem": "특정 topic 수신자를 등록해야 합니다.", "concept": "Subscription", "action": "SUBSCRIBE /topic/chat을 보냅니다.", "check": "main 데모는 CONNECTED 뒤 자동 구독합니다." },
+        { "id": "session-5", "from": "Subscription registry", "to": "Broker", "problem": "broker가 수신자 집합을 알아야 합니다.", "concept": "Fan-out membership", "action": "현재 topic session 집합을 유지합니다.", "check": "연결과 구독을 같은 상태로 보지 않습니다." }
+      ]
     },
     {
-      "id": "http-vs-websocket",
-      "title": "HTTP와 WebSocket 비교",
-      "summary": "요청/응답이 맞는 기능은 HTTP로 유지하고, 연결된 화면에 서버가 다시 보내야 하는 흐름은 WebSocket으로 봅니다.",
+      "id": "message-flow",
+      "title": "application send와 topic receive",
+      "summary": "/app destination은 handler로, /topic destination은 현재 구독 session으로 이어집니다.",
       "steps": [
-        {
-          "order": 1,
-          "actor": "Client",
-          "input": "HTTP GET request",
-          "owner": "Controller",
-          "action": "요청 하나에 응답 하나를 돌려줍니다.",
-          "output": "HTTP response",
-          "note": "조회, 로그인, 캐시 조회처럼 요청 단위가 분명한 기능에 잘 맞습니다.",
-          "id": "http-vs-websocket-step-1",
-          "from": "Client",
-          "to": "Controller",
-          "message": "요청 하나에 응답 하나를 돌려줍니다.",
-          "messageKind": "request",
-          "problem": "HTTP GET request",
-          "concept": "Controller",
-          "check": "HTTP response",
-          "codePointIds": [
-            "websocket-config",
-            "topic-broadcast"
-          ]
-        },
-        {
-          "order": 2,
-          "actor": "Client",
-          "input": "WebSocket connection",
-          "owner": "WebSocket endpoint",
-          "action": "연결을 유지합니다.",
-          "output": "Connected session",
-          "note": "서버가 나중에 다시 메시지를 보낼 수 있는 통로입니다.",
-          "id": "http-vs-websocket-step-2",
-          "from": "Client",
-          "to": "WebSocket endpoint",
-          "message": "연결을 유지합니다.",
-          "messageKind": "event",
-          "problem": "WebSocket connection",
-          "concept": "WebSocket endpoint",
-          "check": "Connected session",
-          "codePointIds": [
-            "topic-broadcast",
-            "websocket-config"
-          ]
-        },
-        {
-          "order": 3,
-          "actor": "Server",
-          "input": "Published message",
-          "owner": "Topic",
-          "action": "구독 중인 클라이언트에게 메시지를 전달합니다.",
-          "output": "Realtime update",
-          "note": "HTTP와 WebSocket은 경쟁 관계가 아니라 목적이 다릅니다.",
-          "id": "http-vs-websocket-step-3",
-          "from": "Server",
-          "to": "Topic",
-          "message": "구독 중인 클라이언트에게 메시지를 전달합니다.",
-          "messageKind": "event",
-          "problem": "Published message",
-          "concept": "Topic",
-          "check": "Realtime update",
-          "codePointIds": [
-            "websocket-config",
-            "topic-broadcast"
-          ]
-        },
-        {
-          "id": "http-vs-websocket-check-4",
-          "order": 4,
-          "actor": "Topic",
-          "owner": "확인 지점",
-          "from": "Topic",
-          "to": "확인 지점",
-          "message": "결과와 실패 지점을 확인합니다.",
-          "messageKind": "response",
-          "problem": "구현 후 실제로 어느 지점이 통과했는지 확인해야 합니다.",
-          "concept": "Verification",
-          "action": "문서의 확인 명령이나 화면에서 결과를 검증합니다.",
-          "check": "성공 흐름과 실패 흐름을 말로 설명합니다.",
-          "note": "Visual Lab은 코드를 대신 완성하지 않고 확인 지점을 고정합니다.",
-          "codePointIds": [
-            "topic-broadcast"
-          ]
-        }
-      ],
-      "bandKind": "scenario"
-    }
-  ],
-  "flow": [
-    {
-      "id": "connect-send-receive-step-1",
-      "label": "WebSocket endpoint",
-      "problem": "Connect request",
-      "concept": "WebSocket endpoint",
-      "action": "HTTP 요청/응답과 다른 연결을 엽니다.",
-      "check": "Open connection",
-      "codePointIds": [
-        "websocket-config",
-        "topic-broadcast"
-      ]
-    },
-    {
-      "id": "connect-send-receive-step-2",
-      "label": "STOMP broker",
-      "problem": "subscribe /topic/chat",
-      "concept": "STOMP broker",
-      "action": "서버가 publish할 topic을 구독합니다.",
-      "check": "Subscription",
-      "codePointIds": [
-        "topic-broadcast",
-        "websocket-config"
-      ]
-    },
-    {
-      "id": "connect-send-receive-step-3",
-      "label": "WebSocketController",
-      "problem": "send /app/chat.send",
-      "concept": "WebSocketController",
-      "action": "메시지를 서버 controller로 보냅니다.",
-      "check": "ChatMessage",
-      "codePointIds": [
-        "websocket-config",
-        "topic-broadcast"
-      ]
-    },
-    {
-      "id": "connect-send-receive-step-4",
-      "label": "STOMP broker",
-      "problem": "ChatMessage",
-      "concept": "STOMP broker",
-      "action": "topic 구독자에게 메시지를 publish합니다.",
-      "check": "Broadcast message",
-      "codePointIds": [
-        "topic-broadcast",
-        "websocket-config"
-      ]
-    },
-    {
-      "id": "connect-send-receive-step-5",
-      "label": "Browser test page",
-      "problem": "Broadcast message",
-      "concept": "Browser test page",
-      "action": "구독 중인 화면에서 메시지를 받습니다.",
-      "check": "Rendered message",
-      "codePointIds": [
-        "websocket-config",
-        "topic-broadcast"
+        { "id": "message-1", "from": "Browser", "to": "STOMP router", "problem": "메시지를 서버 handler로 보냅니다.", "concept": "SEND", "action": "/app/chat.send와 ChatMessage를 전송합니다.", "check": "publish destination을 /topic과 혼동하지 않습니다.", "codePointIds": ["native-demo"] },
+        { "id": "message-2", "from": "STOMP router", "to": "WebSocketController", "problem": "application prefix가 handler를 선택합니다.", "concept": "@MessageMapping", "action": "/chat.send method를 호출합니다.", "check": "ChatMessage body 모양을 확인합니다.", "codePointIds": ["topic-broadcast"] },
+        { "id": "message-3", "from": "WebSocketController", "to": "Simple Broker", "problem": "결과를 구독 경로로 보냅니다.", "concept": "@SendTo", "action": "/topic/chat으로 publish합니다.", "check": "/app과 /topic 역할을 분리합니다." },
+        { "id": "message-4", "from": "Simple Broker", "to": "Subscription registry", "problem": "현재 수신자를 선택합니다.", "concept": "Subscription", "action": "/topic/chat session 집합을 조회합니다.", "check": "발신자보다 구독 여부를 확인합니다." },
+        { "id": "message-5", "from": "Simple Broker", "to": "Subscribed sessions", "problem": "현재 구독자에게 결과를 전달합니다.", "concept": "MESSAGE fan-out", "action": "MESSAGE frame을 각 session에 보냅니다.", "check": "화면의 parsed message와 DevTools raw frame을 구분합니다." }
       ]
     }
   ],
   "codePoints": [
     {
       "id": "websocket-config",
-      "title": "STOMP endpoint와 topic broker를 분리합니다",
+      "title": "transport endpoint와 STOMP destination prefix를 분리합니다",
       "file": "src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt",
       "language": "kotlin",
-      "snippet": "override fun configureMessageBroker(registry: MessageBrokerRegistry) {\n    registry.enableSimpleBroker(\"/topic\")\n    registry.setApplicationDestinationPrefixes(\"/app\")\n}\n\noverride fun registerStompEndpoints(registry: StompEndpointRegistry) {\n    registry.addEndpoint(\"/ws-chat\")\n        .setAllowedOriginPatterns(\n            *allowedOriginPatterns.split(\",\").map(String::trim).toTypedArray()\n        )\n}",
-      "explanation": "클라이언트는 endpoint에 연결하고, 메시지는 /app과 /topic 역할로 나뉩니다.",
-      "check": "connect, subscribe, send 순서를 테스트 페이지에서 지킵니다."
+      "snippet": "override fun configureMessageBroker(registry: MessageBrokerRegistry) {\n    registry.enableSimpleBroker(\"/topic\")\n    registry.setApplicationDestinationPrefixes(\"/app\")\n}\n\noverride fun registerStompEndpoints(registry: StompEndpointRegistry) {\n    registry.addEndpoint(\"/ws-chat\")\n        .setAllowedOriginPatterns(*allowedOriginPatterns.split(\",\").map(String::trim).toTypedArray())\n}",
+      "explanation": "/ws-chat은 WebSocket transport, /app은 handler 입력, /topic은 broker 출력입니다. Origin 설정은 사용자 인증을 뜻하지 않습니다.",
+      "check": "세 주소의 역할을 transport·send·receive로 각각 설명합니다."
     },
     {
       "id": "topic-broadcast",
-      "title": "MessageMapping은 topic broadcast로 이어집니다",
+      "title": "handler 결과가 topic으로 이어집니다",
       "file": "src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt",
       "language": "kotlin",
-      "snippet": "@Controller\nclass WebSocketController {\n\n    @MessageMapping(\"/chat.send\")\n    @SendTo(\"/topic/chat\")\n    fun send(message: ChatMessage): ChatMessage {\n        return message\n    }\n}",
-      "explanation": "HTTP 응답이 아니라 구독 중인 클라이언트들에게 메시지를 다시 보냅니다.",
-      "check": "구독한 브라우저만 broadcast 메시지를 받는지 확인합니다."
+      "snippet": "@Controller\nclass WebSocketController {\n    @MessageMapping(\"/chat.send\")\n    @SendTo(\"/topic/chat\")\n    fun send(message: ChatMessage): ChatMessage {\n        return message\n    }\n}",
+      "explanation": "Controller는 ChatMessage를 반환해 broker destination으로 보냅니다. 실제 어느 탭이 받는지는 현재 subscription 집합이 결정합니다.",
+      "check": "구독한 브라우저 session만 MESSAGE를 받는지 수동 확인합니다."
+    },
+    {
+      "id": "native-demo",
+      "title": "main 데모는 CONNECTED 뒤 자동 구독하고 Send를 엽니다",
+      "file": "src/main/resources/static/realtime-demo.html",
+      "language": "javascript",
+      "snippet": "if (frame.startsWith(\"CONNECTED\")) {\n  sendFrame(\"SUBSCRIBE\", {\n    id: \"chat-subscription\",\n    destination: \"/topic/chat\"\n  });\n  sendButton.disabled = false;\n}",
+      "explanation": "외부 client library나 SockJS 없이 native WebSocket으로 STOMP frame을 직접 구성하는 main 데모의 실제 guard입니다.",
+      "check": "CONNECTED 전후 Send 버튼과 구독 메시지를 브라우저에서 확인합니다."
     }
   ],
   "concepts": [
-    {
-      "title": "WebSocket은 연결을 유지합니다",
-      "body": "서버가 나중에 클라이언트에게 다시 보낼 수 있는 통로를 만듭니다."
-    },
-    {
-      "title": "STOMP는 메시지 목적지를 나눕니다",
-      "body": "보내는 경로와 구독하는 경로를 명확히 표현합니다."
-    },
-    {
-      "title": "Topic은 받는 쪽의 약속입니다",
-      "body": "구독자는 topic에 publish된 메시지를 받습니다."
-    },
-    {
-      "title": "Broadcast는 다시 보내는 흐름입니다",
-      "body": "서버가 받은 메시지를 topic 구독자들에게 전달합니다."
-    }
-  ],
-  "practice": [
-    "HTTP 요청/응답과 WebSocket 연결 유지 흐름의 차이를 설명할 수 있나요?",
-    "`/app`으로 보내고 `/topic`으로 받는 이유를 말할 수 있나요?",
-    "서버가 topic 구독자에게 다시 publish하는 순서를 설명할 수 있나요?",
-    "이번 시퀀스가 채팅 서비스 전체 구현이 아닌 이유를 설명할 수 있나요?"
-  ],
-  "mentorHints": [],
-  "relatedDocs": [
-    {
-      "label": "이론 정리",
-      "href": "../../../theory.md"
-    },
-    {
-      "label": "구현 안내",
-      "href": "../../../implementation.md"
-    },
-    {
-      "label": "체크리스트",
-      "href": "../../../checklist.md"
-    }
-  ],
-  "relatedCode": [],
-  "topic": "Realtime communication",
-  "question": "서버가 클라이언트 요청을 기다리지 않고 연결된 화면에 다시 메시지를 보내려면 무엇이 달라질까?",
-  "sourceDocs": [
-    {
-      "label": "이론 정리",
-      "href": "../../../theory.md"
-    },
-    {
-      "label": "구현 안내",
-      "href": "../../../implementation.md"
-    },
-    {
-      "label": "체크리스트",
-      "href": "../../../checklist.md"
-    }
-  ],
-  "why": {
-    "problem": "HTTP는 클라이언트가 요청을 보내고 서버가 응답하는 구조라 채팅이나 알림처럼 서버가 다시 보내는 흐름을 설명하기 어렵습니다.",
-    "limits": [
-      "클라이언트가 계속 새 요청을 보내는 방식은 실시간 전달 흐름을 이해하기에 한계가 있습니다.",
-      "전송 prefix와 구독 topic을 같은 경로로 보면 메시지 방향이 흐려집니다.",
-      "채팅방, 메시지 저장, 인증 확장을 한 번에 붙이면 가장 작은 broadcast 흐름이 보이지 않습니다."
-    ],
-    "choice": "이번 시퀀스에서는 connect, subscribe, send, receive 순서와 `/app` 전송 경로, `/topic` 구독 경로를 먼저 분리합니다."
-  },
-  "overview": [
-    "Client Connect",
-    "Handshake",
-    "Subscribe /topic",
-    "Send /app",
-    "Message Controller",
-    "Server Publish",
-    "Client Receive"
+    { "title": "Transport와 messaging", "body": "WebSocket은 연결 통로이고 STOMP는 그 통로 위의 frame과 destination 규칙입니다." },
+    { "title": "Subscription fan-out", "body": "broker는 연결된 전체 client가 아니라 topic에 등록된 session에게 MESSAGE를 전달합니다." }
   ],
   "responsibilities": [
-    {
-      "name": "WebSocketConfig",
-      "role": "연결 endpoint, application prefix, broker topic prefix를 설정합니다.",
-      "caution": "`/app`과 `/topic`을 같은 의미로 보지 않습니다."
-    },
-    {
-      "name": "WebSocketController",
-      "role": "클라이언트가 보낸 STOMP 메시지를 받고 topic으로 돌려보냅니다.",
-      "caution": "HTTP Controller와 annotation과 흐름이 다릅니다."
-    },
-    {
-      "name": "Message DTO",
-      "role": "실시간 메시지 payload를 표현합니다.",
-      "caution": "채팅 저장 모델이나 DB Entity와 같은 책임이 아닙니다."
-    },
-    {
-      "name": "Test page",
-      "role": "connect, subscribe, send, receive 순서를 눈으로 확인하는 도구입니다.",
-      "caution": "연결 전에 send를 누르면 흐름을 제대로 확인하기 어렵습니다."
-    }
+    { "name": "WebSocketConfig", "role": "endpoint, Origin, application prefix, broker prefix를 설정합니다.", "caution": "Origin 허용을 사용자 인증으로 해석하지 않습니다." },
+    { "name": "WebSocketController", "role": "application destination의 message를 받아 topic 결과를 반환합니다.", "caution": "HTTP request/response Controller와 같은 수명주기로 보지 않습니다." }
   ],
   "glossary": [
-    {
-      "term": "WebSocket",
-      "meaning": "클라이언트와 서버 사이에 유지되는 양방향 연결입니다.",
-      "caution": "요청 하나와 응답 하나로 끝나는 HTTP와 다릅니다."
-    },
-    {
-      "term": "STOMP",
-      "meaning": "WebSocket 위에서 메시지 목적지와 구독 흐름을 다루는 프로토콜입니다.",
-      "caution": "연결 자체와 메시지 경로를 구분해야 합니다."
-    },
-    {
-      "term": "Topic",
-      "meaning": "여러 클라이언트가 구독하는 메시지 목적지입니다.",
-      "caution": "서버로 보내는 `/app` 경로와 다릅니다."
-    },
-    {
-      "term": "Message DTO",
-      "meaning": "실시간 메시지 payload를 담는 객체입니다.",
-      "caution": "DB 저장 모델이나 채팅방 모델이 아닙니다."
-    },
-    {
-      "term": "Broadcast",
-      "meaning": "서버가 받은 메시지를 구독자들에게 다시 보내는 흐름입니다.",
-      "caution": "한 사용자에게만 응답하는 HTTP와 다릅니다."
-    }
+    { "term": "CONNECTED", "meaning": "STOMP session 준비가 끝났다는 server frame입니다.", "caution": "특정 topic 구독까지 완료됐다는 뜻은 아닙니다." },
+    { "term": "SUBSCRIBE", "meaning": "session을 특정 destination 수신자로 등록하는 frame입니다.", "caution": "WebSocket 연결과 별도입니다." },
+    { "term": "Fan-out", "meaning": "broker가 하나의 message를 현재 여러 구독 session에 전달하는 동작입니다.", "caution": "발신자나 모든 연결을 자동 포함하지 않습니다." }
   ],
   "practical": [
-    {
-      "title": "가장 작은 broadcast만 봅니다",
-      "body": "채팅방 관리, 메시지 저장, 읽음 처리, 인증 확장은 이번 범위를 넘어갑니다."
-    },
-    {
-      "title": "연결 순서가 중요합니다",
-      "body": "connect가 끝나기 전에 subscribe나 send를 실행하면 테스트 화면의 결과가 흔들립니다."
-    },
-    {
-      "title": "HTTP를 대체하지 않습니다",
-      "body": "요청/응답이 맞는 기능은 HTTP로 유지하고, 서버 push가 필요한 곳에 WebSocket을 씁니다."
-    }
+    { "title": "자동 테스트의 상한", "body": "현재 자동 테스트는 데모 페이지 접근만 확인합니다. STOMP roundtrip은 브라우저 수동 증거입니다." },
+    { "title": "실습용 공개 범위", "body": "데모와 /ws-chat의 permitAll은 실습용입니다. 인증, 권한, 저장, 재연결은 별도 개선 범위입니다." }
   ],
   "checks": [
-    "HTTP 요청/응답과 WebSocket 연결 유지 흐름의 차이를 설명할 수 있나요?",
-    "`/app`으로 보내고 `/topic`으로 받는 이유를 말할 수 있나요?",
-    "서버가 topic 구독자에게 다시 publish하는 순서를 설명할 수 있나요?",
-    "이번 시퀀스가 채팅 서비스 전체 구현이 아닌 이유를 설명할 수 있나요?"
+    "WebSocket transport OPEN과 STOMP CONNECTED의 차이를 설명할 수 있나요?",
+    "CONNECTED와 /topic/chat SUBSCRIBED의 차이를 설명할 수 있나요?",
+    "/ws-chat, /app/chat.send, /topic/chat의 역할을 각각 설명할 수 있나요?",
+    "Origin allowlist가 사용자 인증을 대신하지 않는 이유를 설명할 수 있나요?"
   ],
+  "source": {
+    "theory": "../../../theory.md",
+    "implementation": "../../../implementation.md",
+    "checklist": "../../../checklist.md"
+  },
+  "question": "연결된 탭과 실제 topic 수신자를 같은 집합으로 봐도 될까?",
   "next": {
     "id": "09",
     "title": "Docker/Runtime",
-    "reason": "실시간 통신까지 확인했다면, 다음에는 애플리케이션을 jar와 Docker image, runtime config로 실행 가능한 단위로 묶는 흐름을 봅니다."
+    "reason": "연결과 구독의 경계를 추적했다면, 다음에는 애플리케이션이 어떤 artifact와 runtime 설정으로 실제 실행되는지 추적합니다."
   }
 };
