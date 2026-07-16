@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 540" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 60 640 480" role="img" aria-labelledby="title desc">
   <title id="title">WebSocket 연결, STOMP 구독과 fan-out</title>
   <desc id="desc">입구·출구 레이어에서 WebSocket과 STOMP session을 준비하고, 연동·메시징 레이어의 topic에 구독자를 등록한 뒤 시스템 밖 Browser 발행이 Controller와 broker를 거쳐 구독 session에만 fan-out되는 흐름</desc>
   <metadata>Source: docs/theory.md, docs/implementation.md, docs/checklist.md. Original repository-local diagram. License: repository project terms; no external visual assets.</metadata>
@@ -19,71 +19,68 @@
       .excluded{fill:#F6F7FA;stroke:#64748B;stroke-width:2.5;stroke-dasharray:10 8}
       .flow{fill:none;stroke:#2955E4;stroke-width:4;marker-end:url(#arrow)}
       .event{fill:none;stroke:#176F72;stroke-width:4;marker-end:url(#event-arrow)}
-      .title{font-size:29px;font-weight:850;fill:#0C2691}
-      .sub{font-size:22px;font-weight:650;fill:#4B587C}
-      .layer{font-size:21px;font-weight:850;fill:#4B587C}
-      .utility{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:21px;font-weight:850}
-      .name{font-size:23px;font-weight:850}
-      .body{font-size:21px;font-weight:650;fill:#4B587C}
-      .state{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:21px;font-weight:850}
+      .layer-band{font-size:24px;font-weight:850;fill:#4B587C;text-anchor:middle}
+      .layer{font-size:24px;font-weight:850;fill:#4B587C}
+      .utility{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:24px;font-weight:850}
+      .name{font-size:27px;font-weight:850}
+      .body{font-size:24px;font-weight:650;fill:#4B587C}
+      .connector-label{font-size:24px;font-weight:800;fill:#111B3F;text-anchor:end}
+      .state{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:22px;font-weight:850}
     </style>
   </defs>
   <rect width="640" height="540" fill="#F8F9FB"/>
-  <text class="title" x="20" y="39">연결 → 구독 → 여러 구독자 전달</text>
-  <text class="sub" x="20" y="71">연결 완료와 구독 완료는 서로 다른 조건이다</text>
+  <text class="layer-band" x="216" y="85">입구·출구</text>
+  <text class="layer-band" x="532" y="85">연동·메시징</text>
 
   <g data-layer="interface">
     <rect class="node layer-interface" x="18" y="102" width="184" height="122" rx="14"/>
-    <text class="layer" x="38" y="129">입구·출구</text>
-    <text class="utility" x="38" y="157">WEBSOCKET</text>
-    <text class="name" x="38" y="187">OPEN</text>
-    <text class="body" x="38" y="214">/ws-chat 통로</text>
+    <text class="utility" x="38" y="143">WEBSOCKET</text>
+    <text class="name" x="38" y="177">OPEN</text>
+    <text class="body" x="38" y="211">/ws-chat 통로</text>
   </g>
   <path class="flow" d="M202 163H222"/>
   <g data-layer="interface">
     <rect class="node layer-interface" x="230" y="102" width="184" height="122" rx="14"/>
-    <text class="layer" x="250" y="129">입구·출구</text>
-    <text class="utility" x="250" y="157">STOMP</text>
-    <text class="name" x="250" y="187">session 준비</text>
-    <text class="body" x="250" y="214">CONNECTED</text>
+    <text class="utility" x="250" y="143">STOMP</text>
+    <text class="name" x="250" y="177">session 준비</text>
+    <text class="body" x="250" y="211">CONNECTED</text>
   </g>
   <path class="flow" d="M414 163H434"/>
   <g data-layer="integration">
     <rect class="node layer-integration" x="442" y="102" width="180" height="122" rx="14"/>
-    <text class="layer" x="462" y="129">연동·메시징</text>
-    <text class="utility" x="462" y="157">SUBSCRIBE</text>
-    <text class="name" x="462" y="187">/topic/chat</text>
-    <text class="body" x="462" y="214">수신자 등록</text>
+    <text class="utility" x="462" y="143">SUBSCRIBE</text>
+    <text class="name" x="462" y="177">/topic/chat</text>
+    <text class="body" x="462" y="211">수신자 등록</text>
   </g>
-  <path class="event" d="M532 224V263"/>
-  <text class="utility" x="382" y="253">구독자 집합 생성</text>
+  <path class="event" d="M532 224V248"/>
+  <text class="connector-label" x="506" y="247">구독자 집합</text>
 
   <g data-layer="outside">
-    <rect class="node layer-outside" x="18" y="278" width="184" height="122" rx="14"/>
-    <text class="layer" x="38" y="305">시스템 밖</text>
-    <text class="utility" x="38" y="333">SEND · /app</text>
+    <rect class="node layer-outside" x="18" y="260" width="184" height="160" rx="14"/>
+    <text class="layer" x="38" y="299">시스템 밖</text>
+    <text class="utility" x="38" y="331">SEND · /app</text>
     <text class="name" x="38" y="363">chat.send</text>
-    <text class="body" x="38" y="390">Browser A 발행</text>
+    <text class="body" x="38" y="397">Browser A 발행</text>
   </g>
-  <path class="flow" d="M202 339H222"/>
+  <path class="flow" d="M202 340H222"/>
   <g data-layer="interface">
-    <rect class="node layer-interface" x="230" y="278" width="184" height="122" rx="14"/>
-    <text class="layer" x="250" y="305">입구·출구</text>
-    <text class="utility" x="250" y="333">HANDLER</text>
+    <rect class="node layer-interface" x="230" y="260" width="184" height="160" rx="14"/>
+    <text class="layer" x="250" y="299">입구·출구</text>
+    <text class="utility" x="250" y="331">HANDLER</text>
     <text class="name" x="250" y="363">Controller</text>
-    <text class="body" x="250" y="390">broker로 전달</text>
+    <text class="body" x="250" y="397">broker로 전달</text>
   </g>
-  <path class="event" d="M414 339H434"/>
+  <path class="event" d="M414 340H434"/>
   <g data-layer="integration">
-    <rect class="node layer-integration" x="442" y="278" width="180" height="122" rx="14"/>
-    <text class="layer" x="462" y="305">연동·메시징</text>
-    <text class="utility" x="462" y="333">/topic/chat</text>
+    <rect class="node layer-integration" x="442" y="260" width="180" height="160" rx="14"/>
+    <text class="layer" x="462" y="299">연동·메시징</text>
+    <text class="utility" x="462" y="331">/topic/chat</text>
     <text class="name" x="462" y="363">A + B 수신</text>
-    <text class="body" x="462" y="390">구독 session만</text>
+    <text class="body" x="462" y="397">구독 session만</text>
   </g>
 
   <g data-semantic="state">
-    <rect class="excluded" x="18" y="438" width="604" height="66" rx="12"/>
-    <text class="state" x="40" y="479">CONNECTED only → 미구독 · MESSAGE 수신 제외</text>
+    <rect class="excluded" x="18" y="446" width="604" height="74" rx="12"/>
+    <text class="state" x="40" y="491">CONNECTED only → 미구독 · MESSAGE 수신 제외</text>
   </g>
 </svg>
