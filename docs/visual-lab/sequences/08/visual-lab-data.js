@@ -57,6 +57,7 @@ window.visualLabData = {
         "icon": "client",
         "kind": "STOMP client",
         "role": "native WebSocket으로 frame을 보내는 발신 session입니다.",
+        "systemLayer": "outside",
         "boundary": "Browser",
         "codePointIds": ["native-demo"]
       },
@@ -65,6 +66,7 @@ window.visualLabData = {
         "icon": "client",
         "kind": "STOMP client",
         "role": "같은 topic을 구독할 수 있는 별도 session입니다.",
+        "systemLayer": "outside",
         "boundary": "Browser"
       },
       "originGate": {
@@ -72,6 +74,7 @@ window.visualLabData = {
         "icon": "security",
         "kind": "handshake gate",
         "role": "HTTP Upgrade 전에 브라우저 Origin과 허용 패턴을 비교합니다.",
+        "systemLayer": "interface",
         "boundary": "Handshake",
         "codePointIds": ["websocket-config"]
       },
@@ -80,6 +83,7 @@ window.visualLabData = {
         "icon": "websocket",
         "kind": "transport endpoint",
         "role": "native WebSocket transport를 엽니다.",
+        "systemLayer": "interface",
         "boundary": "WebSocket",
         "codePointIds": ["websocket-config"]
       },
@@ -88,6 +92,7 @@ window.visualLabData = {
         "icon": "handler",
         "kind": "message router",
         "role": "CONNECT, SUBSCRIBE, SEND destination을 해석합니다.",
+        "systemLayer": "interface",
         "boundary": "STOMP"
       },
       "demoUiGuard": {
@@ -95,6 +100,7 @@ window.visualLabData = {
         "icon": "gate",
         "kind": "client guard",
         "role": "CONNECTED 전 send를 비활성화하고 CONNECTED 뒤 자동 구독합니다.",
+        "systemLayer": "outside",
         "boundary": "Browser UI",
         "codePointIds": ["native-demo"]
       },
@@ -103,6 +109,7 @@ window.visualLabData = {
         "icon": "api",
         "kind": "message handler",
         "role": "/app/chat.send의 ChatMessage를 받아 /topic/chat 결과를 반환합니다.",
+        "systemLayer": "interface",
         "boundary": "Application messaging",
         "codePointIds": ["topic-broadcast"]
       },
@@ -111,6 +118,7 @@ window.visualLabData = {
         "icon": "broker",
         "kind": "subscription registry",
         "role": "/topic/chat을 구독한 session 집합을 유지합니다.",
+        "systemLayer": "integration",
         "boundary": "Broker"
       },
       "simpleBroker": {
@@ -118,6 +126,7 @@ window.visualLabData = {
         "icon": "broker",
         "kind": "topic broker",
         "role": "현재 topic 구독자에게 MESSAGE frame을 fan-out합니다.",
+        "systemLayer": "integration",
         "boundary": "Broker",
         "codePointIds": ["websocket-config", "topic-broadcast"]
       }
