@@ -1,98 +1,101 @@
 # 08 Realtime WebSocket
 
-## 이 시퀀스에서 다루는 문제
+이 브랜치는 native WebSocket 위에서 STOMP 메시지를 주고받는 학생용 starter입니다. 목표는 채팅 서비스를 만드는 것이 아니라, 연결 endpoint와 전송·구독 경로를 구분하고 한 메시지가 두 브라우저에 broadcast되는 흐름을 완성하는 것입니다.
 
-이전 시퀀스까지는 대부분 HTTP 요청이 들어오면 서버가 응답하는 흐름을 다뤘습니다. 이번 시퀀스는 연결을 유지한 상태에서 서버가 topic으로 메시지를 다시 보내고, 구독 중인 화면이 그 메시지를 받는 가장 작은 실시간 흐름을 다룹니다.
+## 핵심 경로
 
-채팅방 관리, 메시지 저장, 읽음 처리, 사용자 세션 추적, WebSocket 보안 고급 설정은 이번 범위에 포함하지 않습니다.
+| 경로 | 역할 |
+|---|---|
+| `/ws-chat` | 브라우저가 native WebSocket 연결을 시작하는 endpoint |
+| `/app/chat.send` | 클라이언트가 `WebSocketController`로 메시지를 보내는 STOMP destination |
+| `/topic/chat` | 두 브라우저가 broadcast 메시지를 받기 위해 구독하는 topic |
 
-## 학습 목표
+`src/main/resources/static/realtime-demo.html`은 Spring Boot가 직접 제공하는 Live Lab입니다. 브라우저의 `WebSocket` API로 연결하고 필요한 STOMP frame을 직접 보내므로 SockJS, 외부 JavaScript 라이브러리, CDN이 필요하지 않습니다.
 
-- HTTP 요청/응답과 WebSocket 연결 유지 흐름의 차이를 설명합니다.
-- STOMP에서 클라이언트 전송 경로와 topic 구독 경로를 구분합니다.
-- 메시지 DTO, WebSocket 설정, 메시지 controller가 어떤 역할로 연결되는지 확인합니다.
-- 테스트 페이지에서 connect, send, receive 흐름을 직접 확인합니다.
+## 학생이 구현할 정확한 범위
 
-## 멘티 시작 흐름
+TODO는 아래 3개뿐입니다.
 
-실습은 이 starter 브랜치에서 진행합니다.
+1. `WebSocketConfig.registerStompEndpoints(...)`에 `/ws-chat` endpoint를 등록합니다.
+2. `WebSocketConfig.configureMessageBroker(...)`에 application prefix `/app`과 simple broker prefix `/topic`을 설정합니다.
+3. `WebSocketController`에 `/chat.send` handler와 `/topic/chat` broadcast를 연결합니다.
 
-```bash
-git clone -b 08-implementation https://github.com/stdiodh/spring-boot-realtime-communication-lab.git
-cd spring-boot-realtime-communication-lab
-git checkout -b feat/<이름>
-```
+`ChatMessage.kt`와 `realtime-demo.html`은 제공 코드입니다. 메시지 저장, 채팅방, 읽음 처리, JWT WebSocket 인증은 구현 범위가 아닙니다.
 
-먼저 `docs/theory.md`에서 왜 HTTP만으로 실시간 기능을 설명하기 어려운지 읽고, `docs/implementation.md`의 순서대로 TODO를 채웁니다.
+## 50분 실습 순서
 
-## 읽는 순서
+| 시간 | 작업 |
+|---|---|
+| 0~8분 | 세 경로와 `ChatMessage` 구조 확인 |
+| 8~18분 | TODO 1: native WebSocket endpoint 등록 |
+| 18~28분 | TODO 2: application/broker prefix 설정 |
+| 28~38분 | TODO 3: handler와 broadcast 완성 |
+| 38~50분 | 전체 테스트와 브라우저 A/B 실험 |
 
-1. [이론 정리](./docs/theory.md)
-2. [구현 가이드](./docs/implementation.md)
-3. [체크리스트](./docs/checklist.md)
+상세 순서는 [구현 가이드](./docs/implementation.md), 완료 기준은 [체크리스트](./docs/checklist.md)에서 확인합니다.
 
-핵심 파일은 아래 순서로 확인합니다.
+## 테스트
 
-- `src/main/kotlin/com/andi/rest_crud/dto/ChatMessage.kt`
-- `src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt`
-- `src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt`
-- `src/main/resources/static/realtime-demo.html`
+테스트는 H2를 사용하므로 MySQL, Redis, Docker 없이 실행됩니다. starter는 TODO를 모두 완성하기 전에는 관련 테스트가 실패하는 것이 정상입니다.
 
-## 실행 / 테스트 방법
-
-먼저 필요한 로컬 인프라를 실행합니다.
-
-```bash
-docker compose up -d
-```
-
-애플리케이션을 실행합니다.
-
-```bash
-./gradlew bootRun
-```
-
-브라우저에서 테스트 페이지를 엽니다.
-
-```text
-http://localhost:8080/realtime-demo.html
-```
-
-이 페이지와 `/ws-chat/**`은 실습 확인을 위해 공개되어 있으며, SockJS/STOMP 클라이언트를 jsDelivr CDN에서 불러오므로 브라우저 테스트에는 네트워크 연결이 필요합니다.
-
-자동화 테스트는 아래 명령으로 실행합니다.
+macOS/Linux:
 
 ```bash
 ./gradlew test
 ```
 
+Windows CMD:
+
+```bat
+gradlew.bat test
+```
+
+Windows PowerShell에서는 `.\gradlew.bat test`를 사용합니다.
+
+## 애플리케이션과 Live Lab 실행
+
+Spring simple broker는 애플리케이션 프로세스 안에서 동작하므로 Redis가 필요하지 않습니다. 다만 현재 애플리케이션에는 이전 시퀀스의 JPA 설정이 남아 있어 기본 `bootRun`에는 MySQL이 필요합니다.
+
+07 실습의 `aandi-mysql` 컨테이너가 실행 중이면 그대로 재사용하고 새 compose stack을 올리지 않습니다. 실행 중인 MySQL이 없다면 이 디렉터리에서 MySQL만 시작합니다.
+
+```bash
+docker compose up -d mysql
+```
+
+애플리케이션 실행:
+
+```bash
+./gradlew bootRun
+```
+
+Windows CMD는 `gradlew.bat bootRun`, PowerShell은 `.\gradlew.bat bootRun`을 사용합니다. 브라우저에서 `http://localhost:8080/realtime-demo.html`을 엽니다. 이 페이지와 `/ws-chat`은 실습용 공개 경로이므로 회원가입, 로그인, JWT가 필요하지 않습니다.
+
+## 브라우저 A/B 실험
+
+1. Live Lab을 탭 A와 탭 B에서 엽니다.
+2. 두 탭을 모두 연결해 `/topic/chat`을 구독합니다.
+3. 탭 A에서 `/app/chat.send`로 메시지를 보냅니다.
+4. 탭 A와 탭 B에 같은 메시지가 표시되는지 확인합니다.
+5. 탭 B 연결을 끊은 뒤 다시 보내고, 연결된 구독자만 받는지 확인합니다.
+
+Live Lab의 Subscribe 표시는 `SUBSCRIBE` frame을 보냈다는 뜻입니다. Spring simple broker는 STOMP `RECEIPT`를 지원하지 않으므로, 브라우저에서는 실제 `MESSAGE` 수신이 등록 증거이고 자동화 테스트는 서버의 `SessionSubscribeEvent`를 기다립니다.
+
+## 포트와 컨테이너 충돌
+
+`compose.yaml`은 고정 이름 `aandi-mysql`, `aandi-redis`와 포트 `3306`, `6379`를 사용합니다.
+
+```bash
+docker ps -a --format "table {{.Names}}\t{{.Ports}}"
+```
+
+- 07 stack의 같은 컨테이너가 실행 중이면 재사용하고, 중지 상태라면 `docker start aandi-mysql`로 MySQL만 다시 시작합니다.
+- 다른 Compose 프로젝트가 이름을 소유해 충돌하면 그 프로젝트 디렉터리에서 `docker compose down`한 뒤 다시 시작합니다.
+- 실시간 실습만 진행할 때 Redis는 broker가 아니므로 `docker compose up -d mysql`만으로 충분합니다.
+- `3306`, `6379`, `8080` 점유는 macOS/Linux에서 `lsof -nP -iTCP:<포트> -sTCP:LISTEN`, Windows에서 `netstat -ano | findstr :<포트>`로 확인하고 해당 서비스나 이전 애플리케이션을 종료합니다. 실시간 실습만 한다면 `6379` 점유는 Redis를 시작하지 않는 방식으로 피할 수 있습니다.
+
 ## 완료 기준
 
-- WebSocket endpoint와 topic 구독 경로의 역할을 구분해 설명합니다.
-- 메시지 DTO가 브라우저와 서버 사이에서 어떤 데이터를 옮기는지 설명합니다.
-- 테스트 페이지에서 연결, 발행, 수신 흐름을 확인합니다.
-- 이번 시퀀스에서 메시지 저장이나 채팅방 관리로 확장하지 않는 이유를 설명합니다.
-- `./gradlew test`가 통과합니다.
-
-<details>
-<summary>멘토용 진행 포인트</summary>
-
-## 수업 전 확인
-
-- `compose.yaml`로 MySQL과 Redis가 실행 가능한지 확인합니다.
-- `src/main/resources/static/realtime-demo.html`이 `/ws-chat`, `/app/chat.send`, `/topic/chat` 흐름을 사용하고 있는지 확인합니다.
-- 이전 시퀀스의 CRUD, 인증, 캐시 기능 설명으로 수업 범위가 새지 않도록 실시간 메시지 흐름에 초점을 맞춥니다.
-
-## 수업 중 질문
-
-- HTTP 응답과 topic broadcast는 메시지를 받는 대상이 어떻게 다른가요?
-- `/app`으로 보내는 경로와 `/topic`으로 구독하는 경로를 왜 나누나요?
-- 이 단계에서 메시지를 DB에 저장하지 않아도 되는 이유는 무엇인가요?
-
-## 리뷰 기준
-
-- 멘티가 connect, send, receive 순서를 화면에서 설명할 수 있는지 확인합니다.
-- controller 구현만 맞추는 데서 끝나지 않고 설정, DTO, 테스트 페이지의 연결 관계를 함께 설명하는지 봅니다.
-- 막힌 경우 해결 내용을 직접 알려주기보다 annotation의 역할과 반환 흐름을 질문으로 좁혀갑니다.
-
-</details>
+- 정확히 3개 TODO를 완성했습니다.
+- `/ws-chat`, `/app/chat.send`, `/topic/chat`의 역할을 설명할 수 있습니다.
+- `./gradlew test` 또는 Windows 대응 명령이 통과합니다.
+- 두 브라우저 탭에서 같은 topic broadcast를 확인했습니다.

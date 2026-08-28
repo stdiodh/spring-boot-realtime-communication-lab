@@ -3,650 +3,733 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A&I Realtime Chat Demo</title>
+  <title>A&amp;I WebSocket/STOMP Live Lab</title>
   <style>
     :root {
-      --bg: #f4f7fb;
-      --panel: rgba(255, 255, 255, 0.92);
-      --line: #d7e2ef;
-      --text: #142033;
-      --muted: #607089;
-      --brand: #1d4ed8;
-      --brand-soft: #dbeafe;
-      --accent: #0f766e;
-      --accent-soft: #ccfbf1;
-      --ink: #0f172a;
-      --chat-bg: linear-gradient(180deg, #f8fbff 0%, #eef3ff 100%);
-      --shadow: 0 20px 40px rgba(20, 32, 51, 0.08);
+      color-scheme: light;
+      --canvas: #F8F9FB;
+      --ink: #111B3F;
+      --navy: #0C2691;
+      --blue: #2955E4;
+      --teal: #176F72;
+      --line: #C9D6F3;
+      --shadow: 0 20px 48px rgba(17, 27, 63, 0.10);
+      --radius: 20px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--canvas); }
     body {
       margin: 0;
-      font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top right, rgba(29, 78, 216, 0.12), transparent 28%),
-        radial-gradient(circle at top left, rgba(15, 118, 110, 0.10), transparent 24%),
-        var(--bg);
+      color: var(--ink);
+      background: linear-gradient(135deg, rgba(41, 85, 228, 0.08), transparent 34rem), var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    button, textarea { font: inherit; }
+    button:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 3px;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    code, .log-list, .message-meta {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     }
 
     .shell {
-      max-width: 1180px;
+      width: min(1440px, 100%);
       margin: 0 auto;
-      padding: 28px 18px 36px;
+      padding: 28px clamp(16px, 3vw, 44px) 44px;
     }
-
-    .hero {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 18px;
-      margin-bottom: 18px;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(14px);
-    }
-
-    .hero-main {
-      padding: 28px;
-      min-height: 220px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background:
-        linear-gradient(135deg, rgba(29, 78, 216, 0.95), rgba(15, 118, 110, 0.92)),
-        #17338f;
-      color: white;
-    }
-
-    .hero-main h1 {
-      margin: 0 0 10px;
-      font-size: clamp(28px, 4vw, 42px);
-      line-height: 1.06;
-    }
-
-    .hero-main p {
-      margin: 0;
-      max-width: 58ch;
-      color: rgba(255, 255, 255, 0.88);
-    }
-
-    .hero-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 22px;
-    }
-
-    .badge {
-      padding: 9px 14px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      font-size: 14px;
-    }
-
-    .hero-side {
-      padding: 22px;
-      display: grid;
-      gap: 14px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 247, 255, 0.96));
-    }
-
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .metric {
-      padding: 16px;
-      border-radius: 18px;
-      background: #f8fbff;
-      border: 1px solid #deebff;
-    }
-
-    .metric label {
-      display: block;
-      margin-bottom: 8px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .metric strong {
-      font-size: 18px;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 320px 1fr;
-      gap: 18px;
-    }
-
-    .sidebar {
-      padding: 18px;
-      display: grid;
-      gap: 16px;
-      align-content: start;
-    }
-
-    .section-title {
+    .eyebrow {
       margin: 0 0 8px;
-      font-size: 13px;
-      letter-spacing: 0.08em;
+      color: var(--navy);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--muted);
     }
-
-    .field {
+    .intro {
       display: grid;
-      gap: 8px;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 22px;
     }
-
-    .field label {
-      font-size: 14px;
-      font-weight: 600;
+    .intro h1 {
+      max-width: 19ch;
+      margin-bottom: 10px;
+      font-size: clamp(2rem, 4.6vw, 4.6rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
     }
-
-    input, textarea {
-      width: 100%;
-      border: 1px solid #c9d6e8;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font: inherit;
-      color: var(--text);
-      background: white;
+    .intro-copy {
+      max-width: 62ch;
+      margin-bottom: 0;
+      color: rgba(17, 27, 63, 0.72);
     }
-
-    textarea {
-      min-height: 108px;
-      resize: vertical;
-    }
-
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 14px;
-      padding: 12px 16px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-    }
-
-    button.primary {
-      background: var(--brand);
-      color: white;
-    }
-
-    button.secondary {
-      background: #e7eef8;
-      color: #27405e;
-    }
-
-    button.ghost {
-      background: transparent;
-      color: var(--muted);
+    .contract {
+      padding: 18px;
       border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(248, 249, 251, 0.88);
+      box-shadow: var(--shadow);
     }
-
-    .tip-list {
+    .contract h2 { margin-bottom: 12px; font-size: 1rem; }
+    .contract dl {
       display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px 16px;
+      margin: 0;
+    }
+    .contract dt {
+      color: rgba(17, 27, 63, 0.64);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .contract dd {
+      min-width: 0;
+      margin: 0;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+    code { color: var(--navy); font-size: 0.82rem; font-weight: 700; }
+
+    .flow-card {
+      margin-bottom: 24px;
+      padding: 18px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--ink);
+      color: var(--canvas);
+      box-shadow: var(--shadow);
+    }
+    .flow-card h2 { margin-bottom: 14px; font-size: 0.9rem; letter-spacing: 0.04em; }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(96px, 1fr));
       gap: 10px;
       margin: 0;
       padding: 0;
       list-style: none;
     }
-
-    .tip-list li {
-      padding: 12px 14px;
+    .flow li {
+      position: relative;
+      min-width: 0;
+      padding: 13px 12px;
+      border: 1px solid rgba(201, 214, 243, 0.36);
       border-radius: 14px;
-      background: #f8fbff;
-      border: 1px solid #deebff;
-      color: #31506c;
-      font-size: 14px;
+      color: rgba(248, 249, 251, 0.68);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-align: center;
+      transition: 240ms ease;
     }
-
-    .chat-panel {
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      min-height: 720px;
-      overflow: hidden;
-    }
-
-    .chat-header {
-      padding: 20px 22px;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      align-items: center;
-      background: white;
-    }
-
-    .chat-header h2 {
-      margin: 0;
-      font-size: 22px;
-    }
-
-    .presence {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 13px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: #f8fbff;
-      color: #31506c;
-      font-size: 14px;
-    }
-
-    .dot {
+    .flow li::after {
+      position: absolute;
+      top: 50%;
+      right: -10px;
       width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #94a3b8;
-      box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.14);
+      color: var(--line);
+      content: "→";
+      transform: translateY(-50%);
+    }
+    .flow li:last-child::after { content: none; }
+    .flow li[data-active="true"] {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: var(--canvas);
+      transform: translateY(-2px);
+    }
+    .flow small {
+      display: block;
+      margin-top: 4px;
+      font-weight: 500;
+      letter-spacing: 0;
+      opacity: 0.8;
+      overflow-wrap: anywhere;
+    }
+    .flow-status {
+      margin: 12px 0 0;
+      color: rgba(248, 249, 251, 0.74);
+      font-size: 0.82rem;
     }
 
-    .dot.live {
-      background: #10b981;
-      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.16);
-    }
-
-    .chat-stream {
-      background: var(--chat-bg);
-      padding: 22px;
-      overflow: auto;
+    .clients {
       display: grid;
-      gap: 14px;
-      align-content: start;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
     }
-
-    .empty-state {
-      padding: 28px;
-      border-radius: 18px;
-      border: 1px dashed #c7d8ee;
-      background: rgba(255, 255, 255, 0.74);
-      color: var(--muted);
+    .client {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(248, 249, 251, 0.92);
+      box-shadow: var(--shadow);
     }
-
-    .bubble {
-      max-width: min(78%, 560px);
-      padding: 14px 16px;
-      border-radius: 20px 20px 20px 6px;
-      background: white;
-      border: 1px solid #dce8f7;
-      box-shadow: 0 12px 24px rgba(20, 32, 51, 0.06);
-    }
-
-    .bubble.self {
-      margin-left: auto;
-      border-radius: 20px 20px 6px 20px;
-      background: linear-gradient(135deg, #dbeafe, #ecfeff);
-      border-color: #b9dcff;
-    }
-
-    .bubble-meta {
+    .client-header {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 8px;
-      color: var(--muted);
-      font-size: 13px;
+      padding: 20px;
+      border-bottom: 1px solid var(--line);
     }
-
-    .bubble-content {
-      white-space: pre-wrap;
-      word-break: break-word;
+    .client-header h2 { margin: 0; font-size: 1.5rem; letter-spacing: -0.025em; }
+    .status-pair { display: flex; flex-wrap: wrap; gap: 8px; }
+    .status {
+      display: inline-flex;
+      min-height: 32px;
+      align-items: center;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: rgba(17, 27, 63, 0.72);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .status::before {
+      width: 8px;
+      height: 8px;
+      margin-right: 7px;
+      border-radius: 50%;
+      background: var(--line);
+      content: "";
+    }
+    .status[data-on="true"]::before {
+      background: var(--teal);
+      box-shadow: 0 0 0 4px rgba(23, 111, 114, 0.14);
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    button {
+      min-height: 44px;
+      padding: 9px 11px;
+      border: 1px solid var(--navy);
+      border-radius: 12px;
+      background: var(--navy);
+      color: var(--canvas);
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform 140ms ease, opacity 140ms ease, background 140ms ease;
+    }
+    button:hover:not(:disabled) { background: var(--blue); transform: translateY(-1px); }
+    button.secondary { background: transparent; color: var(--navy); }
+    button:disabled {
+      border-color: var(--line);
+      background: var(--line);
+      color: rgba(17, 27, 63, 0.46);
+      cursor: not-allowed;
+      opacity: 0.72;
+    }
+    .composer {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .composer label {
+      grid-column: 1 / -1;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+    textarea {
+      width: 100%;
+      min-height: 70px;
+      padding: 12px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--canvas);
+      color: var(--ink);
+    }
+    .composer button { align-self: stretch; }
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+      gap: 12px;
+      padding: 18px 20px 20px;
+    }
+    .evidence { min-width: 0; }
+    .evidence h3 {
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .message-list, .log-list {
+      height: 230px;
+      margin: 0;
+      padding: 10px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--canvas);
+      list-style: none;
+    }
+    .message-list li, .log-list li { overflow-wrap: anywhere; }
+    .message-list li + li, .log-list li + li { margin-top: 8px; }
+    .message-list li {
+      padding: 10px;
+      border-left: 3px solid var(--teal);
+      background: rgba(201, 214, 243, 0.25);
+    }
+    .message-meta {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--teal);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .log-list {
+      background: var(--ink);
+      color: var(--canvas);
+      font-size: 0.72rem;
       line-height: 1.55;
     }
+    .empty { color: rgba(17, 27, 63, 0.58); font-size: 0.78rem; }
+    .log-list .empty { color: rgba(248, 249, 251, 0.58); }
 
-    .chat-footer {
-      border-top: 1px solid var(--line);
-      background: white;
-      padding: 18px 22px 22px;
-      display: grid;
-      gap: 14px;
+    @media (max-width: 1040px) {
+      .intro, .clients { grid-template-columns: 1fr; }
+      .intro h1 { max-width: 24ch; }
+      .flow { overflow-x: auto; padding-bottom: 5px; }
     }
-
-    .event-log {
-      min-height: 156px;
-      padding: 16px;
-      border-radius: 18px;
-      background: #0f172a;
-      color: #d8f5ff;
-      font-family: "SFMono-Regular", ui-monospace, monospace;
-      white-space: pre-wrap;
-      overflow: auto;
-    }
-
-    .helper {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    @media (max-width: 960px) {
-      .hero,
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .chat-panel {
-        min-height: 620px;
-      }
-    }
-
     @media (max-width: 640px) {
-      .shell {
-        padding: 16px 12px 28px;
-      }
-
-      .hero-main,
-      .hero-side,
-      .sidebar,
-      .chat-header,
-      .chat-footer {
-        padding: 18px;
-      }
-
-      .metric-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .bubble {
-        max-width: 100%;
+      .shell { padding: 18px 12px 28px; }
+      .intro { gap: 16px; }
+      .intro h1 { font-size: 2.35rem; }
+      .contract dl, .evidence-grid { grid-template-columns: 1fr; }
+      .contract dd { margin-bottom: 6px; text-align: left; }
+      .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .composer { grid-template-columns: 1fr; }
+      .composer button { width: 100%; }
+      .message-list, .log-list { height: 190px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
       }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <section class="hero">
-      <div class="panel hero-main">
-        <div>
-          <h1>Realtime Chat Playground</h1>
-          <p>WebSocket 연결을 유지한 채 메시지를 보내고, 서버가 topic으로 다시 broadcast 해서 다른 탭에서도 바로 보이는 흐름을 체감하는 데모입니다.</p>
-        </div>
-        <div class="hero-badges">
-          <span class="badge">WebSocket Endpoint: <strong>/ws-chat</strong></span>
-          <span class="badge">Client Send: <strong>/app/chat.send</strong></span>
-          <span class="badge">Topic Subscribe: <strong>/topic/chat</strong></span>
-        </div>
+  <main class="shell">
+    <header class="intro">
+      <div>
+        <p class="eyebrow">Sequence 08 · Twin Session Console</p>
+        <h1>구독자가 메시지의 도착 범위를 결정한다</h1>
+        <p class="intro-copy">Client A와 Client B를 각각 연결하고 같은 topic을 구독해 보세요. 채팅 기능이 아니라 STOMP session, destination, broadcast의 한 흐름만 실험합니다.</p>
       </div>
+      <section class="contract" aria-labelledby="contract-title">
+        <h2 id="contract-title">서버 계약 · 읽기 전용</h2>
+        <dl>
+          <dt>WebSocket endpoint</dt><dd><code>/ws-chat</code></dd>
+          <dt>Application destination</dt><dd><code>/app/chat.send</code></dd>
+          <dt>Topic destination</dt><dd><code>/topic/chat</code></dd>
+          <dt>Payload</dt><dd><code>{ sender, content }</code></dd>
+        </dl>
+      </section>
+    </header>
 
-      <aside class="panel hero-side">
-        <div>
-          <p class="section-title">Quick Check</p>
-          <div class="metric-grid">
-            <div class="metric">
-              <label>연결 상태</label>
-              <strong id="connectionLabel">대기 중</strong>
-            </div>
-            <div class="metric">
-              <label>수신 메시지 수</label>
-              <strong id="messageCountLabel">0</strong>
-            </div>
-            <div class="metric">
-              <label>내 닉네임</label>
-              <strong id="nicknameLabel">andi</strong>
-            </div>
-            <div class="metric">
-              <label>학습 포인트</label>
-              <strong>broadcast</strong>
-            </div>
-          </div>
-        </div>
-        <div>
-          <p class="section-title">Test Hint</p>
-          <ul class="tip-list">
-            <li>브라우저 탭을 두 개 열고 같은 topic을 구독해보세요.</li>
-            <li>한 탭에서 보낸 메시지가 다른 탭에도 바로 보이면 실시간 흐름이 더 선명하게 느껴집니다.</li>
-            <li>이 페이지는 채팅방 관리가 아니라 message receive/broadcast 학습에 집중합니다.</li>
-          </ul>
-        </div>
-      </aside>
+    <section class="flow-card" aria-labelledby="flow-title">
+      <h2 id="flow-title">CONNECT → SUBSCRIBE → SEND → SERVER → BROADCAST → RECEIVE</h2>
+      <ol class="flow" aria-label="STOMP 메시지 흐름">
+        <li data-flow="connect">CONNECT<small>session</small></li>
+        <li data-flow="subscribe">SUBSCRIBE<small>/topic/chat</small></li>
+        <li data-flow="send">SEND<small>/app/chat.send</small></li>
+        <li data-flow="server">SERVER<small>@MessageMapping</small></li>
+        <li data-flow="broadcast">BROADCAST<small>simple broker</small></li>
+        <li data-flow="receive">RECEIVE<small>MESSAGE frame</small></li>
+      </ol>
+      <p id="flow-status" class="flow-status" aria-live="polite">각 클라이언트의 Connect부터 시작하세요.</p>
     </section>
 
-    <section class="layout">
-      <aside class="panel sidebar">
-        <div>
-          <p class="section-title">Session</p>
-          <div class="field">
-            <label for="senderInput">닉네임</label>
-            <input id="senderInput" placeholder="보내는 사람" value="andi">
-          </div>
-        </div>
-
-        <div>
-          <p class="section-title">Connection</p>
-          <div class="button-row">
-            <button id="connectBtn" class="primary">Connect</button>
-            <button id="disconnectBtn" class="secondary">Disconnect</button>
-            <button id="clearBtn" class="ghost">Clear View</button>
-          </div>
-          <p class="helper">Connect 후 `/topic/chat`을 구독하고, send 시 `/app/chat.send`로 메시지를 보냅니다.</p>
-        </div>
-
-        <div>
-          <p class="section-title">Composer</p>
-          <div class="field">
-            <label for="contentInput">메시지</label>
-            <textarea id="contentInput" placeholder="실시간으로 보낼 메시지를 입력하세요.">실시간 테스트</textarea>
-          </div>
-          <div class="button-row">
-            <button id="sendBtn" class="primary">Send Message</button>
-          </div>
-          <p class="helper">Enter는 줄바꿈, `Ctrl + Enter` 또는 `Cmd + Enter`로 전송합니다.</p>
-        </div>
-      </aside>
-
-      <section class="panel chat-panel">
-        <header class="chat-header">
-          <div>
-            <h2>Live Chat Feed</h2>
-            <p class="helper">보낸 메시지가 말풍선처럼 다시 나타나면 실시간 broadcast 흐름이 연결된 것입니다.</p>
-          </div>
-          <div class="presence">
-            <span class="pill"><span id="connectionDot" class="dot"></span><span id="connectionPillText">offline</span></span>
-            <span class="pill">Topic: /topic/chat</span>
+    <section class="clients" aria-label="두 개의 독립 STOMP 클라이언트">
+      <article class="client" data-client="a" data-label="Client A">
+        <header class="client-header">
+          <h2>Client A</h2>
+          <div class="status-pair" aria-live="polite">
+            <span class="status" data-role="connection-status" data-on="false">Disconnected</span>
+            <span class="status" data-role="subscription-status" data-on="false">Not subscribed</span>
           </div>
         </header>
-
-        <div id="messages" class="chat-stream">
-          <div id="emptyState" class="empty-state">
-            아직 받은 메시지가 없습니다.
-            <br>Connect 후 메시지를 보내면 여기에 실시간으로 채팅 카드가 쌓입니다.
-          </div>
+        <div class="controls" aria-label="Client A session controls">
+          <button id="client-a-connect" type="button" data-action="connect">Connect</button>
+          <button id="client-a-subscribe" type="button" data-action="subscribe" disabled>Subscribe</button>
+          <button id="client-a-unsubscribe" class="secondary" type="button" data-action="unsubscribe" disabled>Unsubscribe</button>
+          <button id="client-a-disconnect" class="secondary" type="button" data-action="disconnect" disabled>Disconnect</button>
+          <button id="client-a-clear" class="secondary" type="button" data-action="clear">Clear Log</button>
         </div>
+        <div class="composer">
+          <label for="client-a-content">Client A message</label>
+          <textarea id="client-a-content" data-role="content" rows="2">hello</textarea>
+          <button id="client-a-send" type="button" data-action="send" disabled>Send</button>
+        </div>
+        <div class="evidence-grid">
+          <section class="evidence" aria-labelledby="client-a-messages-title">
+            <h3 id="client-a-messages-title">Received messages</h3>
+            <ol class="message-list" data-role="messages" role="log" aria-live="polite"><li class="empty">아직 수신한 메시지가 없습니다.</li></ol>
+          </section>
+          <section class="evidence" aria-labelledby="client-a-log-title">
+            <h3 id="client-a-log-title">Event log</h3>
+            <ol class="log-list" data-role="log" role="log" aria-live="polite"><li class="empty">세션 이벤트가 시간순으로 표시됩니다.</li></ol>
+          </section>
+        </div>
+      </article>
 
-        <footer class="chat-footer">
-          <div>
-            <p class="section-title">Event Log</p>
-            <div id="status" class="event-log">연결 전</div>
+      <article class="client" data-client="b" data-label="Client B">
+        <header class="client-header">
+          <h2>Client B</h2>
+          <div class="status-pair" aria-live="polite">
+            <span class="status" data-role="connection-status" data-on="false">Disconnected</span>
+            <span class="status" data-role="subscription-status" data-on="false">Not subscribed</span>
           </div>
-        </footer>
-      </section>
+        </header>
+        <div class="controls" aria-label="Client B session controls">
+          <button id="client-b-connect" type="button" data-action="connect">Connect</button>
+          <button id="client-b-subscribe" type="button" data-action="subscribe" disabled>Subscribe</button>
+          <button id="client-b-unsubscribe" class="secondary" type="button" data-action="unsubscribe" disabled>Unsubscribe</button>
+          <button id="client-b-disconnect" class="secondary" type="button" data-action="disconnect" disabled>Disconnect</button>
+          <button id="client-b-clear" class="secondary" type="button" data-action="clear">Clear Log</button>
+        </div>
+        <div class="composer">
+          <label for="client-b-content">Client B message</label>
+          <textarea id="client-b-content" data-role="content" rows="2">hello</textarea>
+          <button id="client-b-send" type="button" data-action="send" disabled>Send</button>
+        </div>
+        <div class="evidence-grid">
+          <section class="evidence" aria-labelledby="client-b-messages-title">
+            <h3 id="client-b-messages-title">Received messages</h3>
+            <ol class="message-list" data-role="messages" role="log" aria-live="polite"><li class="empty">아직 수신한 메시지가 없습니다.</li></ol>
+          </section>
+          <section class="evidence" aria-labelledby="client-b-log-title">
+            <h3 id="client-b-log-title">Event log</h3>
+            <ol class="log-list" data-role="log" role="log" aria-live="polite"><li class="empty">세션 이벤트가 시간순으로 표시됩니다.</li></ol>
+          </section>
+        </div>
+      </article>
     </section>
-  </div>
+  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
   <script>
-    let stompClient = null;
-    let messageCount = 0;
+    (() => {
+      "use strict";
 
-    const statusBox = document.getElementById("status");
-    const messagesBox = document.getElementById("messages");
-    const emptyState = document.getElementById("emptyState");
-    const senderInput = document.getElementById("senderInput");
-    const contentInput = document.getElementById("contentInput");
-    const connectionLabel = document.getElementById("connectionLabel");
-    const messageCountLabel = document.getElementById("messageCountLabel");
-    const nicknameLabel = document.getElementById("nicknameLabel");
-    const connectionDot = document.getElementById("connectionDot");
-    const connectionPillText = document.getElementById("connectionPillText");
-
-    function nowTime() {
-      return new Date().toLocaleTimeString("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
+      const DESTINATIONS = Object.freeze({
+        endpoint: "/ws-chat",
+        application: "/app/chat.send",
+        topic: "/topic/chat"
       });
-    }
+      const flowStatus = document.getElementById("flow-status");
+      const flowSteps = Array.from(document.querySelectorAll("[data-flow]"));
+      let flowTimers = [];
 
-    function appendStatus(text) {
-      statusBox.textContent += `\n[${nowTime()}] ${text}`;
-      statusBox.scrollTop = statusBox.scrollHeight;
-    }
-
-    function setConnectionState(connected) {
-      connectionLabel.textContent = connected ? "연결됨" : "대기 중";
-      connectionPillText.textContent = connected ? "online" : "offline";
-      connectionDot.classList.toggle("live", connected);
-    }
-
-    function updateNicknameBadge() {
-      nicknameLabel.textContent = senderInput.value.trim() || "anonymous";
-    }
-
-    function appendMessageCard(message) {
-      emptyState.style.display = "none";
-      const isSelf = (message.sender || "").trim() === (senderInput.value || "").trim();
-      const article = document.createElement("article");
-      article.className = `bubble${isSelf ? " self" : ""}`;
-      article.innerHTML = `
-        <div class="bubble-meta">
-          <strong>${escapeHtml(message.sender || "anonymous")}</strong>
-          <span>${nowTime()}</span>
-        </div>
-        <div class="bubble-content">${escapeHtml(message.content || "")}</div>
-      `;
-      messagesBox.appendChild(article);
-      messagesBox.scrollTop = messagesBox.scrollHeight;
-      messageCount += 1;
-      messageCountLabel.textContent = String(messageCount);
-    }
-
-    function clearView() {
-      messageCount = 0;
-      messageCountLabel.textContent = "0";
-      messagesBox.innerHTML = "";
-      messagesBox.appendChild(emptyState);
-      emptyState.style.display = "block";
-      statusBox.textContent = "연결 전";
-    }
-
-    function escapeHtml(text) {
-      return String(text)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-    }
-
-    function connect() {
-      if (stompClient && stompClient.connected) {
-        appendStatus("이미 연결되어 있습니다.");
-        return;
+      function timeNow() {
+        return new Intl.DateTimeFormat("ko-KR", {
+          hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+        }).format(new Date());
       }
 
-      updateNicknameBadge();
-      appendStatus("WebSocket 연결 시도: /ws-chat");
+      function clearFlowTimers() {
+        flowTimers.forEach(window.clearTimeout);
+        flowTimers = [];
+      }
 
-      const socket = new SockJS("/ws-chat");
-      stompClient = StompJs.Stomp.over(socket);
-      stompClient.debug = () => {};
-
-      stompClient.connect({}, () => {
-        setConnectionState(true);
-        appendStatus("연결 완료");
-        appendStatus("topic 구독 시작: /topic/chat");
-
-        stompClient.subscribe("/topic/chat", (frame) => {
-          const message = JSON.parse(frame.body);
-          appendStatus(`수신: ${message.sender} -> ${message.content}`);
-          appendMessageCard(message);
+      function showFlow(step, text) {
+        flowSteps.forEach((item) => {
+          item.dataset.active = String(item.dataset.flow === step);
         });
-      }, (error) => {
-        setConnectionState(false);
-        appendStatus("연결 실패: " + error);
-      });
-    }
-
-    function disconnect() {
-      if (!stompClient || !stompClient.connected) {
-        appendStatus("연결된 세션이 없습니다.");
-        return;
+        flowStatus.textContent = text;
       }
 
-      stompClient.disconnect(() => {
-        setConnectionState(false);
-        appendStatus("연결 종료");
-      });
-    }
-
-    function sendMessage() {
-      if (!stompClient || !stompClient.connected) {
-        appendStatus("먼저 Connect 하세요.");
-        return;
+      function scheduleServerFlow(label) {
+        clearFlowTimers();
+        flowTimers.push(window.setTimeout(
+          () => showFlow("server", `${label}의 메시지를 @MessageMapping handler가 처리합니다.`),
+          240
+        ));
+        flowTimers.push(window.setTimeout(
+          () => showFlow("broadcast", "simple broker가 현재 topic 구독자에게 전달합니다."),
+          480
+        ));
       }
 
-      const sender = senderInput.value.trim();
-      const content = contentInput.value.trim();
-
-      if (!sender || !content) {
-        appendStatus("sender와 content를 모두 입력하세요.");
-        return;
+      function encodeFrame(command, headers = {}, body = "") {
+        const lines = [command];
+        Object.entries(headers).forEach(([name, value]) => lines.push(`${name}:${value}`));
+        return `${lines.join("\n")}\n\n${body}\0`;
       }
 
-      const payload = { sender, content };
-      appendStatus("전송: " + JSON.stringify(payload));
-      stompClient.send("/app/chat.send", {}, JSON.stringify(payload));
-      contentInput.focus();
-      contentInput.select();
-    }
-
-    senderInput.addEventListener("input", updateNicknameBadge);
-    document.getElementById("connectBtn").addEventListener("click", connect);
-    document.getElementById("disconnectBtn").addEventListener("click", disconnect);
-    document.getElementById("sendBtn").addEventListener("click", sendMessage);
-    document.getElementById("clearBtn").addEventListener("click", clearView);
-    contentInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        sendMessage();
+      function parseFrame(rawFrame) {
+        const normalized = rawFrame.replaceAll("\r\n", "\n").replace(/^\n+/, "");
+        const separator = normalized.indexOf("\n\n");
+        const head = separator >= 0 ? normalized.slice(0, separator) : normalized;
+        const body = separator >= 0 ? normalized.slice(separator + 2) : "";
+        const lines = head.split("\n");
+        const command = lines.shift() || "";
+        const headers = {};
+        lines.forEach((line) => {
+          const delimiter = line.indexOf(":");
+          if (delimiter >= 0) headers[line.slice(0, delimiter)] = line.slice(delimiter + 1);
+        });
+        return { command, headers, body };
       }
-    });
 
-    updateNicknameBadge();
-    setConnectionState(false);
+      function createClient(root) {
+        const id = root.dataset.client;
+        const label = root.dataset.label;
+        const connectionStatus = root.querySelector("[data-role='connection-status']");
+        const subscriptionStatus = root.querySelector("[data-role='subscription-status']");
+        const contentInput = root.querySelector("[data-role='content']");
+        const messages = root.querySelector("[data-role='messages']");
+        const log = root.querySelector("[data-role='log']");
+        const buttons = Object.fromEntries(
+          Array.from(root.querySelectorAll("[data-action]")).map((button) => [button.dataset.action, button])
+        );
+        const state = {
+          socket: null,
+          connected: false,
+          subscribed: false,
+          disconnecting: false,
+          disconnectReceipt: null,
+          buffer: ""
+        };
+
+        function clearEmpty(list) {
+          list.querySelector(".empty")?.remove();
+        }
+
+        function appendLog(text) {
+          clearEmpty(log);
+          const item = document.createElement("li");
+          item.textContent = `[${timeNow()}] ${text}`;
+          log.appendChild(item);
+          log.scrollTop = log.scrollHeight;
+        }
+
+        function appendMessage(message) {
+          clearEmpty(messages);
+          const item = document.createElement("li");
+          const meta = document.createElement("span");
+          const content = document.createElement("span");
+          meta.className = "message-meta";
+          meta.textContent = `${timeNow()} · ${message.sender || "unknown"}`;
+          content.textContent = message.content || "";
+          item.append(meta, content);
+          messages.appendChild(item);
+          messages.scrollTop = messages.scrollHeight;
+        }
+
+        function updateControls() {
+          const socketPending = state.socket?.readyState === WebSocket.CONNECTING;
+          buttons.connect.disabled = Boolean(state.socket);
+          buttons.subscribe.disabled = !state.connected || state.subscribed || state.disconnecting;
+          buttons.unsubscribe.disabled = !state.connected || !state.subscribed || state.disconnecting;
+          buttons.disconnect.disabled = !state.socket || state.disconnecting;
+          buttons.send.disabled = !state.connected || state.disconnecting;
+          connectionStatus.textContent = state.connected
+            ? (state.disconnecting ? "Disconnecting" : "Connected")
+            : (socketPending ? "Connecting" : "Disconnected");
+          connectionStatus.dataset.on = String(state.connected && !state.disconnecting);
+          subscriptionStatus.textContent = state.subscribed ? "Subscribed (sent)" : "Not subscribed";
+          subscriptionStatus.dataset.on = String(state.subscribed);
+        }
+
+        function sendRaw(command, headers = {}, body = "") {
+          if (!state.socket || state.socket.readyState !== WebSocket.OPEN) {
+            appendLog(`${command} 실패 · WebSocket이 열려 있지 않습니다.`);
+            return false;
+          }
+          state.socket.send(encodeFrame(command, headers, body));
+          return true;
+        }
+
+        function resetSession() {
+          state.socket = null;
+          state.connected = false;
+          state.subscribed = false;
+          state.disconnecting = false;
+          state.disconnectReceipt = null;
+          state.buffer = "";
+          updateControls();
+        }
+
+        function handleFrame(received) {
+          if (received.command === "CONNECTED") {
+            state.connected = true;
+            appendLog(`CONNECTED · STOMP ${received.headers.version || "session"}`);
+            showFlow("connect", `${label}의 STOMP session이 연결되었습니다.`);
+            updateControls();
+            return;
+          }
+          if (received.command === "MESSAGE") {
+            try {
+              const message = JSON.parse(received.body);
+              appendMessage(message);
+              appendLog(`MESSAGE · ${received.headers.destination || DESTINATIONS.topic}`);
+              clearFlowTimers();
+              showFlow("receive", `${label}이 topic broadcast 메시지를 수신했습니다.`);
+            } catch (error) {
+              appendLog(`MESSAGE 해석 실패 · ${error.message}`);
+            }
+            return;
+          }
+          if (
+            received.command === "RECEIPT" &&
+            state.disconnecting &&
+            received.headers["receipt-id"] === state.disconnectReceipt
+          ) {
+            appendLog("RECEIPT · DISCONNECT 확인");
+            state.socket?.close(1000, "STOMP disconnect");
+            return;
+          }
+          if (received.command === "ERROR") {
+            appendLog(`ERROR · ${received.headers.message || received.body || "unknown"}`);
+          }
+        }
+
+        function consume(data) {
+          state.buffer += String(data);
+          let boundary = state.buffer.indexOf("\0");
+          while (boundary >= 0) {
+            const rawFrame = state.buffer.slice(0, boundary);
+            state.buffer = state.buffer.slice(boundary + 1);
+            if (rawFrame.trim()) handleFrame(parseFrame(rawFrame));
+            boundary = state.buffer.indexOf("\0");
+          }
+        }
+
+        function connect() {
+          if (state.socket) return;
+          const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+          state.socket = new WebSocket(`${protocol}//${window.location.host}${DESTINATIONS.endpoint}`);
+          appendLog(`OPEN 시도 · ${DESTINATIONS.endpoint}`);
+          showFlow("connect", `${label}이 WebSocket transport를 여는 중입니다.`);
+          updateControls();
+          state.socket.addEventListener("open", () => {
+            appendLog("OPEN · CONNECT frame 전송");
+            sendRaw("CONNECT", {
+              "accept-version": "1.2",
+              "heart-beat": "0,0",
+              host: window.location.host
+            });
+          });
+          state.socket.addEventListener("message", (event) => consume(event.data));
+          state.socket.addEventListener("error", () => {
+            appendLog("WebSocket 오류 · 서버와 endpoint를 확인하세요.");
+          });
+          state.socket.addEventListener("close", (event) => {
+            appendLog(`CLOSE · code ${event.code}`);
+            resetSession();
+          });
+        }
+
+        function subscribe() {
+          if (!state.connected || state.subscribed) return;
+          if (sendRaw("SUBSCRIBE", {
+            id: `${id}-topic-chat`,
+            destination: DESTINATIONS.topic,
+            ack: "auto"
+          })) {
+            state.subscribed = true;
+            appendLog(`SUBSCRIBE 전송 · ${DESTINATIONS.topic} · simple broker는 receipt 미지원`);
+            showFlow("subscribe", `${label}이 topic 구독 frame을 보냈습니다. MESSAGE 수신이 실제 등록 증거입니다.`);
+            updateControls();
+          }
+        }
+
+        function unsubscribe() {
+          if (!state.connected || !state.subscribed) return;
+          if (sendRaw("UNSUBSCRIBE", { id: `${id}-topic-chat` })) {
+            state.subscribed = false;
+            appendLog(`UNSUBSCRIBE 전송 · ${DESTINATIONS.topic}`);
+            updateControls();
+          }
+        }
+
+        function send() {
+          if (!state.connected || state.disconnecting) return;
+          const content = contentInput.value.trim();
+          if (!content) {
+            appendLog("SEND 보류 · content를 입력하세요.");
+            contentInput.focus();
+            return;
+          }
+          const body = JSON.stringify({ sender: label, content });
+          const byteLength = new TextEncoder().encode(body).length;
+          if (sendRaw("SEND", {
+            destination: DESTINATIONS.application,
+            "content-type": "application/json",
+            "content-length": String(byteLength)
+          }, body)) {
+            appendLog(`SEND · ${DESTINATIONS.application}`);
+            showFlow("send", `${label}이 application destination으로 메시지를 보냈습니다.`);
+            scheduleServerFlow(label);
+          }
+        }
+
+        function disconnect() {
+          if (!state.socket || state.disconnecting) return;
+          state.disconnecting = true;
+          state.subscribed = false;
+          updateControls();
+          if (state.connected && state.socket.readyState === WebSocket.OPEN) {
+            state.disconnectReceipt = `${id}-disconnect`;
+            sendRaw("DISCONNECT", { receipt: state.disconnectReceipt });
+            appendLog("DISCONNECT 전송 · receipt 대기");
+            window.setTimeout(() => {
+              if (state.socket?.readyState === WebSocket.OPEN) {
+                appendLog("DISCONNECT receipt timeout · transport 종료");
+                state.socket.close(1000, "disconnect timeout");
+              }
+            }, 1000);
+          } else {
+            state.socket.close(1000, "client disconnect");
+          }
+        }
+
+        function clear() {
+          const messageEmpty = document.createElement("li");
+          const logEmpty = document.createElement("li");
+          messageEmpty.className = "empty";
+          logEmpty.className = "empty";
+          messageEmpty.textContent = "아직 수신한 메시지가 없습니다.";
+          logEmpty.textContent = "세션 이벤트가 시간순으로 표시됩니다.";
+          messages.replaceChildren(messageEmpty);
+          log.replaceChildren(logEmpty);
+        }
+
+        buttons.connect.addEventListener("click", connect);
+        buttons.subscribe.addEventListener("click", subscribe);
+        buttons.unsubscribe.addEventListener("click", unsubscribe);
+        buttons.disconnect.addEventListener("click", disconnect);
+        buttons.send.addEventListener("click", send);
+        buttons.clear.addEventListener("click", clear);
+        contentInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            send();
+          }
+        });
+        updateControls();
+        return { close: () => state.socket?.close(1000, "page unload") };
+      }
+
+      const clients = Array.from(document.querySelectorAll("[data-client]"), createClient);
+      window.addEventListener("beforeunload", () => clients.forEach((client) => client.close()));
+    })();
   </script>
 </body>
 </html>

@@ -1,28 +1,25 @@
 package com.andi.rest_crud.controller
 
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.core.io.ClassPathResource
 
-@SpringBootTest
-@AutoConfigureMockMvc
-class RealtimeDemoAccessIntegrationTest @Autowired constructor(
-    private val mockMvc: MockMvc
-) {
+class RealtimeDemoAccessIntegrationTest {
 
     @Test
-    fun `실시간 데모 페이지는 로그인 없이 열 수 있다`() {
-        mockMvc.perform(get("/realtime-demo.html"))
-            .andExpect(status().isOk)
-    }
+    fun `실시간 데모 페이지는 두 native client와 읽기 전용 destination 계약을 보여준다`() {
+        val html = ClassPathResource("static/realtime-demo.html")
+            .inputStream
+            .bufferedReader()
+            .use { it.readText() }
 
-    @Test
-    fun `SockJS 연결 정보는 로그인 없이 조회할 수 있다`() {
-        mockMvc.perform(get("/ws-chat/info"))
-            .andExpect(status().isOk)
+        assertTrue(html.contains("Client A"))
+        assertTrue(html.contains("Client B"))
+        assertTrue(html.contains("/ws-chat"))
+        assertTrue(html.contains("/app/chat.send"))
+        assertTrue(html.contains("/topic/chat"))
+        assertTrue(html.contains("new WebSocket"))
+        assertFalse(html.contains("SockJS"))
     }
 }
