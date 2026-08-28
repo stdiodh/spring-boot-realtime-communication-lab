@@ -10,7 +10,5 @@ class WebSocketController {
 
     @MessageMapping("/chat.send")
     @SendTo("/topic/chat")
-    fun send(message: ChatMessage): ChatMessage {
-        return message
-    }
+    fun send(message: ChatMessage): ChatMessage = message
 }

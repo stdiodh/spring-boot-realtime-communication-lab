@@ -1,50 +1,37 @@
 # 체크리스트
 
-## 1. 기능 확인
+## 완성 구현
 
-- [ ] `docker compose up -d`로 필요한 로컬 인프라를 실행했습니다.
-- [ ] `./gradlew bootRun`으로 애플리케이션을 실행했습니다.
-- [ ] `http://localhost:8080/realtime-demo.html`에서 connect가 완료됩니다.
-- [ ] sender와 content를 입력한 뒤 메시지를 보내면 화면에 수신 결과가 표시됩니다.
-- [ ] 브라우저 탭 두 개에서 같은 topic broadcast 흐름을 확인했습니다.
-- [ ] jsDelivr에서 SockJS/STOMP 스크립트를 불러올 수 있는 네트워크 환경인지 확인했습니다.
+- [ ] `WebSocketConfig`가 native `/ws-chat` endpoint를 등록합니다.
+- [ ] application prefix `/app`과 simple broker prefix `/topic`이 설정되어 있습니다.
+- [ ] `WebSocketController`가 `/chat.send`에서 받고 `/topic/chat`으로 broadcast합니다.
+- [ ] `ChatMessage`는 `sender`, `content`만 가지며 메시지를 DB에 저장하지 않습니다.
 
-## 2. 코드 구조 확인
+## 테스트
 
-- [ ] `ChatMessage.kt`가 `sender`, `content`로 최소 메시지 구조를 표현합니다.
-- [ ] `WebSocketConfig.kt`에서 `/ws-chat`, `/app`, `/topic`의 역할을 설명할 수 있습니다.
-- [ ] `WebSocketController.kt`에서 `@MessageMapping`, `@SendTo`, 반환값의 관계를 설명할 수 있습니다.
-- [ ] 테스트 페이지가 서버 설정과 같은 경로를 사용합니다.
-- [ ] `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS`와 실습용 `permitAll` 범위를 운영 설정과 구분할 수 있습니다.
-- [ ] 메시지 저장, 채팅방 관리, 읽음 처리, 사용자 세션 추적을 이번 범위에 추가하지 않았습니다.
+- [ ] macOS/Linux에서 `./gradlew test`, Windows에서 `gradlew.bat test`를 실행했습니다.
+- [ ] 테스트가 H2와 임의 포트를 사용하므로 Docker 없이 통과합니다.
+- [ ] controller 반환 테스트가 통과합니다.
+- [ ] 두 native WebSocket/STOMP session의 topic broadcast 테스트가 통과합니다.
+- [ ] 정적 Live Lab HTML의 A/B client와 destination 계약 테스트가 통과합니다.
 
-## 3. 실패 케이스 확인
+## 브라우저 A/B
 
-- [ ] connect가 끝나기 전에 send를 눌렀을 때 어떤 문제가 생기는지 설명할 수 있습니다.
-- [ ] `/app/chat.send`와 `/topic/chat`을 바꾸어 쓰면 왜 수신이 되지 않는지 설명할 수 있습니다.
-- [ ] starter 구현에서 메시지가 보이지 않을 때 설정, controller, 테스트 페이지 중 어디부터 확인할지 말할 수 있습니다.
+- [ ] `http://localhost:8080/realtime-demo.html`을 로그인 없이 열 수 있습니다.
+- [ ] SockJS나 CDN 없이 native WebSocket으로 `/ws-chat`에 연결됩니다.
+- [ ] Subscribe 표시는 `SUBSCRIBE` frame 전송 상태이며 simple broker의 `RECEIPT`가 아님을 설명할 수 있습니다.
+- [ ] 탭 A와 B의 실제 `MESSAGE` 수신으로 `/topic/chat` 등록을 확인합니다.
+- [ ] 탭 A가 `/app/chat.send`로 보낸 메시지를 두 탭이 받습니다.
+- [ ] 탭 B 연결을 끊은 뒤에는 연결된 구독자만 다음 메시지를 받습니다.
 
-## 4. 설명할 수 있어야 하는 것
+## 환경
 
-- [ ] HTTP 요청/응답과 WebSocket 연결 유지 흐름의 차이
-- [ ] `/ws-chat`, `/app/chat.send`, `/topic/chat`의 역할
-- [ ] `@MessageMapping`과 `@SendTo`가 이어주는 흐름
-- [ ] 서버가 받은 메시지를 topic으로 다시 보내는 이유
-- [ ] 이번 answer가 메시지 저장까지 포함하지 않는 이유
+- [ ] simple broker가 Redis가 아니라 Spring 애플리케이션 안에서 동작함을 설명할 수 있습니다.
+- [ ] 테스트에는 Docker가 필요 없고 전체 앱 `bootRun`에는 JPA context 때문에 MySQL이 필요함을 구분합니다.
+- [ ] 07의 `aandi-mysql`이 실행 중이면 재사용했습니다.
+- [ ] `aandi-mysql`, `aandi-redis`, `3306`, `6379`, `8080` 충돌 여부를 루트 `README.md`의 명령으로 확인했습니다.
 
-## 5. 남은 한계와 다음 시퀀스 연결
+## answer 역할
 
-- [ ] 이번 구현은 실시간 메시지 흐름 확인에 집중하며 채팅 서비스 전체 구현이 아닙니다.
-- [ ] 운영 환경에서는 연결 유지, timeout, scale-out, 보안 설정을 추가로 고려해야 합니다.
-- [ ] 다음 시퀀스에서는 이 애플리케이션을 Docker와 실행 환경 관점에서 다룹니다.
-- [ ] `./gradlew test` 결과를 확인했습니다.
-
-<details>
-<summary>멘토용 리뷰 기준</summary>
-
-- 통과 기준: 멘티가 answer 구현을 보고 연결, 전송, 구독, broadcast 역할을 구분해 설명합니다.
-- 보완 필요 기준: 코드가 동작해도 `/app`과 `/topic`의 역할을 설명하지 못하거나 메시지 저장 등 범위 밖 구현을 answer의 핵심으로 오해합니다.
-- 질문 예시: "`@SendTo`가 없다면 구독 중인 브라우저는 어떤 결과를 보게 될까요?"
-- 비교 포인트: starter 구현과 answer 구현의 차이를 annotation, 반환값, 테스트 페이지 경로 순서로 확인합니다.
-
-</details>
+- [ ] starter와 비교할 때 endpoint, 두 prefix, handler/broadcast의 세 TODO만 확인했습니다.
+- [ ] 메시지 저장, 채팅방, 읽음 처리, JWT 인증을 answer 범위로 확장하지 않았습니다.

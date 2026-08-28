@@ -22,6 +22,5 @@ class WebSocketConfig(
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry.addEndpoint("/ws-chat")
             .setAllowedOriginPatterns(*allowedOriginPatterns.split(",").map(String::trim).toTypedArray())
-            .withSockJS()
     }
 }
