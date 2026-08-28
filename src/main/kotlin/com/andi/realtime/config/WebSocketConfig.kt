@@ -1,4 +1,4 @@
-package com.andi.rest_crud.config
+package com.andi.realtime.config
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
@@ -14,13 +14,16 @@ class WebSocketConfig(
     private val allowedOriginPatterns: String
 ) : WebSocketMessageBrokerConfigurer {
 
-    override fun configureMessageBroker(registry: MessageBrokerRegistry) {
-        registry.enableSimpleBroker("/topic")
-        registry.setApplicationDestinationPrefixes("/app")
-    }
-
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry.addEndpoint("/ws-chat")
-            .setAllowedOriginPatterns(*allowedOriginPatterns.split(",").map(String::trim).toTypedArray())
+            .setAllowedOriginPatterns(*allowedOrigins())
     }
+
+    override fun configureMessageBroker(registry: MessageBrokerRegistry) {
+        registry.setApplicationDestinationPrefixes("/app")
+        registry.enableSimpleBroker("/topic")
+    }
+
+    private fun allowedOrigins(): Array<String> =
+        allowedOriginPatterns.split(",").map(String::trim).toTypedArray()
 }

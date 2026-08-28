@@ -1,6 +1,6 @@
-package com.andi.rest_crud.controller
+package com.andi.realtime.controller
 
-import com.andi.rest_crud.dto.ChatMessage
+import com.andi.realtime.dto.ChatMessage
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 

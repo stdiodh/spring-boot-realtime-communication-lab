@@ -1,11 +1,11 @@
-package com.andi.rest_crud
+package com.andi.realtime
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class RestCrudApplication
+class RealtimeCommunicationApplication
 
 fun main(args: Array<String>) {
-	runApplication<RestCrudApplication>(*args)
+    runApplication<RealtimeCommunicationApplication>(*args)
 }

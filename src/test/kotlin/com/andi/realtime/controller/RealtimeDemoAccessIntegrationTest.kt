@@ -1,4 +1,4 @@
-package com.andi.rest_crud.controller
+package com.andi.realtime.controller
 
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

@@ -1,6 +1,6 @@
-package com.andi.rest_crud.controller
+package com.andi.realtime.controller
 
-import com.andi.rest_crud.dto.ChatMessage
+import com.andi.realtime.dto.ChatMessage
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -17,8 +17,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor
 import org.springframework.messaging.simp.stomp.StompHeaders
 import org.springframework.messaging.simp.stomp.StompSession
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter
-import org.springframework.web.socket.messaging.SessionSubscribeEvent
 import org.springframework.web.socket.client.standard.StandardWebSocketClient
+import org.springframework.web.socket.messaging.SessionSubscribeEvent
 import org.springframework.web.socket.messaging.WebSocketStompClient
 import tools.jackson.module.kotlin.jsonMapper
 import java.lang.reflect.Type

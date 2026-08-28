@@ -1,6 +1,6 @@
-package com.andi.rest_crud.controller
+package com.andi.realtime.controller
 
-import com.andi.rest_crud.dto.ChatMessage
+import com.andi.realtime.dto.ChatMessage
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.SendTo
 import org.springframework.stereotype.Controller
