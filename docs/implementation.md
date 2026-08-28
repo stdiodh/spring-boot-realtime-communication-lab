@@ -38,10 +38,17 @@ DB 저장, 채팅방 분기, 인증 로직을 추가하지 않습니다.
 
 Windows CMD는 `gradlew.bat`, PowerShell은 `.\gradlew.bat`을 사용합니다. Docker나 별도 프론트엔드 서버는 필요하지 않습니다.
 
-1. `http://localhost:8080/realtime-demo.html`을 엽니다.
-2. Client A와 B를 연결합니다.
-3. 두 client가 `/topic/chat`을 구독합니다.
-4. A가 `/app/chat.send`로 메시지를 보냅니다.
-5. A와 B가 같은 메시지를 받는지 확인합니다.
-6. B의 구독을 해제하고 다시 전송해 A만 받는지 확인합니다.
-7. A 연결을 종료하고 Send가 비활성화되는지 확인합니다.
+콘솔에 `Tomcat started on port 8080`이 표시된 뒤 브라우저 주소창에 다음 URL을 직접 입력합니다.
+
+```text
+http://localhost:8080/realtime-demo.html
+```
+
+GitHub에서는 [Live Lab 소스](../src/main/resources/static/realtime-demo.html)만 볼 수 있으며, 실제 실험에는 실행 중인 Spring Boot 서버가 필요합니다.
+
+1. Client A와 B를 연결합니다.
+2. 두 client가 `/topic/chat`을 구독합니다.
+3. A가 `/app/chat.send`로 메시지를 보냅니다.
+4. A와 B가 같은 메시지를 받는지 확인합니다.
+5. B의 구독을 해제하고 다시 전송해 A만 받는지 확인합니다.
+6. A 연결을 종료하고 Send가 비활성화되는지 확인합니다.

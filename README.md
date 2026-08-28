@@ -26,7 +26,7 @@ CONNECT -> SUBSCRIBE -> SEND -> @MessageMapping -> TOPIC BROADCAST -> RECEIVE ->
 | `/app/chat.send` | `WebSocketController`로 메시지를 보내는 destination |
 | `/topic/chat` | 구독자에게 메시지를 broadcast하는 topic |
 
-Live Lab은 `src/main/resources/static/realtime-demo.html`에 있습니다. Spring Boot가 직접 제공하며 SockJS, CDN, 별도 프론트엔드 서버를 사용하지 않습니다.
+Live Lab 소스는 [realtime-demo.html](./src/main/resources/static/realtime-demo.html)입니다. Spring Boot가 직접 제공하며 SockJS, CDN, 별도 프론트엔드 서버를 사용하지 않습니다.
 
 ## 테스트
 
@@ -58,7 +58,15 @@ macOS/Linux:
 ./gradlew bootRun
 ```
 
-Windows CMD는 `gradlew.bat bootRun`, PowerShell은 `.\gradlew.bat bootRun`을 사용합니다. 브라우저에서 `http://localhost:8080/realtime-demo.html`을 엽니다.
+Windows CMD는 `gradlew.bat bootRun`, PowerShell은 `.\gradlew.bat bootRun`을 사용합니다.
+
+콘솔에 `Tomcat started on port 8080`이 표시된 뒤 브라우저 주소창에 다음 URL을 직접 입력합니다.
+
+```text
+http://localhost:8080/realtime-demo.html
+```
+
+GitHub의 Live Lab 소스 링크는 로컬 Spring Boot 서버를 실행하지 않습니다.
 
 MySQL, Redis, Docker는 사용하지 않습니다. `8080`이 이미 사용 중이면 이전 Spring Boot 프로세스를 종료한 뒤 다시 실행합니다.
 
