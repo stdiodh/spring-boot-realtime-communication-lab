@@ -1,53 +1,26 @@
-# Realtime Communication 구현 안내
+# Realtime Communication 실습 가이드
 
-## 1. 해결할 문제
-
-새 메시지를 확인하려고 HTTP 조회를 반복하면 실시간 화면을 만들기 어렵습니다.
-WebSocket/STOMP를 사용해 연결을 유지하고 topic으로 메시지를 받는 흐름을 만듭니다.
-
-## 2. 구현 흐름
-
-1. `WebSocketConfig.kt`에서 native WebSocket endpoint, 허용 Origin, broker prefix를 설정합니다.
-2. `ChatMessage.kt`에서 송수신 메시지 body를 정합니다.
-3. `WebSocketController.kt`에서 메시지를 받아 topic으로 보냅니다.
-4. `realtime-demo.html`에서 connect, subscribe, send, receive를 확인합니다.
-
-클라이언트는 `/ws-chat`에 연결하고, `/topic/chat`을 구독한 뒤 `/app/chat.send`로 메시지를 보냅니다.
-`main`의 `realtime-demo.html`은 STOMP frame을 직접 만들며 SockJS를 사용하지 않습니다. `08-implementation`/`08-answer`의 SockJS 기반 학습 페이지와 메커니즘을 구분합니다.
-
-## 3. 핵심 코드
-
-왜 이 코드를 보는지 먼저 정리합니다.
-클라이언트가 보낸 메시지를 서버가 topic으로 다시 보내야 다른 구독자가 받을 수 있습니다.
-
-```kotlin
-@MessageMapping("/chat.send")
-@SendTo("/topic/chat")
-fun send(message: ChatMessage): ChatMessage {
-    return message
-}
-```
-
-이 코드는 send와 receive가 한 Controller 흐름으로 이어지는 문제를 해결합니다.
-클라이언트는 publish destination으로 메시지를 보내고, topic 구독으로 결과를 받습니다.
-
-## 4. 실행/테스트
+`main`은 개념 가이드와 정적 Visual Lab을 위한 브랜치입니다.
+코드 실습은 학생 시작 브랜치에서 진행합니다.
 
 ```bash
-docker compose up -d
-./gradlew test
-./gradlew bootRun
+git checkout 08-implementation
 ```
 
-브라우저에서 아래 페이지를 엽니다.
+## 구현 순서
 
-```text
-http://localhost:8080/realtime-demo.html
-```
+1. `WebSocketConfig.kt`에서 client가 연결할 endpoint를 완성합니다.
+2. 같은 설정에서 application destination과 broker topic prefix를 구분합니다.
+3. `WebSocketController.kt`에서 들어온 메시지를 topic으로 broadcast하는 handler를 완성합니다.
 
-페이지와 `/ws-chat/**`의 `permitAll`은 실습용 공개 범위입니다. 운영에서는 실제 프런트 Origin과 인증 정책을 별도로 적용합니다.
+이번 실습은 연결, 구독, 발행, 수신 흐름에 집중합니다.
+인증, 메시지 저장, 채팅방 관리, 재연결 기능은 구현 범위에 포함하지 않습니다.
 
-## 5. 한계와 다음 개선 방향
+## 확인 순서
 
-이번 실습은 실시간 송수신의 최소 흐름입니다.
-인증, 권한, 채팅 저장, 재연결 전략은 다음 개선 주제로 분리합니다.
+1. 학생 시작 브랜치의 실행 안내에 따라 필요한 컨테이너와 애플리케이션을 시작합니다.
+2. 브라우저 탭을 두 개 열고 각각 연결과 구독을 완료합니다.
+3. 한 탭에서 메시지를 보내고 두 구독 session의 수신 결과를 확인합니다.
+4. transport 연결, STOMP session, topic subscription을 서로 다른 상태로 설명합니다.
+
+구체적인 실행 명령과 테스트 페이지 경로는 학생 시작 브랜치의 `README.md`를 따릅니다.
