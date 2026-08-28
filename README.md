@@ -26,7 +26,15 @@ macOS/Linux:
 ./gradlew bootRun
 ```
 
-Windows CMD에서는 `gradlew.bat`, PowerShell에서는 `.\gradlew.bat`를 사용합니다. 실행 후 [http://localhost:8080/realtime-demo.html](http://localhost:8080/realtime-demo.html)을 엽니다.
+Windows CMD에서는 `gradlew.bat`, PowerShell에서는 `.\gradlew.bat`를 사용합니다.
+
+콘솔에 `Tomcat started on port 8080`이 표시된 뒤 브라우저 주소창에 다음 URL을 직접 입력합니다.
+
+```text
+http://localhost:8080/realtime-demo.html
+```
+
+GitHub에서 파일 내용만 확인하려면 [realtime-demo.html](./src/main/resources/static/realtime-demo.html)을 엽니다. GitHub의 파일 링크는 로컬 Spring Boot 서버를 실행하지 않습니다.
 
 ## Live Lab
 

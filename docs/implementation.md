@@ -39,4 +39,10 @@ handler는 메시지를 저장하지 않고 받은 `ChatMessage`를 그대로 to
 ./gradlew bootRun
 ```
 
-[http://localhost:8080/realtime-demo.html](http://localhost:8080/realtime-demo.html)에서 Client A와 B를 연결·구독하고 A의 메시지를 두 client가 받는지 확인합니다. Docker나 별도 프론트엔드 서버는 필요하지 않습니다.
+콘솔에 `Tomcat started on port 8080`이 표시된 뒤 브라우저 주소창에 다음 URL을 직접 입력합니다.
+
+```text
+http://localhost:8080/realtime-demo.html
+```
+
+Client A와 B를 연결·구독하고 A의 메시지를 두 client가 받는지 확인합니다. GitHub에서는 [Live Lab 소스](../src/main/resources/static/realtime-demo.html)만 볼 수 있으며, 실제 실험에는 실행 중인 Spring Boot 서버가 필요합니다. Docker나 별도 프론트엔드 서버는 필요하지 않습니다.
