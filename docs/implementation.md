@@ -12,7 +12,7 @@ native WebSocket /ws-chat
   -> /topic/chat broadcast
 ```
 
-## TODO 1. endpoint 등록
+## [1/3] TODO: endpoint 등록
 
 파일: `src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt`
 
@@ -24,7 +24,7 @@ native WebSocket /ws-chat
 - `.withSockJS()`를 추가하지 않습니다.
 - 같은 Origin의 Spring 정적 Live Lab이 연결할 수 있습니다.
 
-## TODO 2. application/broker prefix 설정
+## [2/3] TODO: application/broker prefix 설정
 
 파일: `src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt`
 
@@ -39,7 +39,7 @@ native WebSocket /ws-chat
 - Live Lab이 `/topic/chat`을 구독할 수 있습니다.
 - Redis를 STOMP broker로 연결하지 않습니다.
 
-## TODO 3. handler와 broadcast 완성
+## [3/3] TODO: handler와 broadcast 완성
 
 파일: `src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt`
 

@@ -2,6 +2,18 @@
 
 이 브랜치는 native WebSocket 위에서 STOMP 메시지를 주고받는 학생용 starter입니다. 목표는 채팅 서비스를 만드는 것이 아니라, 연결 endpoint와 전송·구독 경로를 구분하고 한 메시지가 두 브라우저에 broadcast되는 흐름을 완성하는 것입니다.
 
+## 먼저 열 파일 2개
+
+실습 중에는 아래 두 파일만 수정합니다. 번호 순서대로 구현합니다.
+
+1. `src/main/kotlin/com/andi/rest_crud/config/WebSocketConfig.kt`
+   - `[1/3] TODO`: WebSocket endpoint 등록
+   - `[2/3] TODO`: application/broker prefix 설정
+2. `src/main/kotlin/com/andi/rest_crud/controller/WebSocketController.kt`
+   - `[3/3] TODO`: handler와 topic broadcast 구현
+
+다른 소스 파일은 흐름을 확인하기 위한 제공 코드이며 수정하지 않습니다.
+
 ## 핵심 경로
 
 | 경로 | 역할 |
@@ -16,9 +28,9 @@
 
 TODO는 아래 3개뿐입니다.
 
-1. `WebSocketConfig.registerStompEndpoints(...)`에 `/ws-chat` endpoint를 등록합니다.
-2. `WebSocketConfig.configureMessageBroker(...)`에 application prefix `/app`과 simple broker prefix `/topic`을 설정합니다.
-3. `WebSocketController`에 `/chat.send` handler와 `/topic/chat` broadcast를 연결합니다.
+1. `[1/3]` `WebSocketConfig.registerStompEndpoints(...)`에 `/ws-chat` endpoint를 등록합니다.
+2. `[2/3]` `WebSocketConfig.configureMessageBroker(...)`에 application prefix `/app`과 simple broker prefix `/topic`을 설정합니다.
+3. `[3/3]` `WebSocketController`에 `/chat.send` handler와 `/topic/chat` broadcast를 연결합니다.
 
 `ChatMessage.kt`와 `realtime-demo.html`은 제공 코드입니다. 메시지 저장, 채팅방, 읽음 처리, JWT WebSocket 인증은 구현 범위가 아닙니다.
 

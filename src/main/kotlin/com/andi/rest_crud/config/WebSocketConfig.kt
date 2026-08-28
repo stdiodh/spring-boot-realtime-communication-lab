@@ -15,11 +15,11 @@ class WebSocketConfig(
 ) : WebSocketMessageBrokerConfigurer {
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-        // TODO 1: `/ws-chat` native STOMP endpoint를 등록하고 제공된 Origin allowlist를 적용하세요.
+        // [1/3] TODO: `/ws-chat` native STOMP endpoint를 등록하고 제공된 Origin allowlist를 적용하세요.
     }
 
     override fun configureMessageBroker(registry: MessageBrokerRegistry) {
-        // TODO 2: application prefix `/app`과 simple broker prefix `/topic`을 설정하세요.
+        // [2/3] TODO: application prefix `/app`과 simple broker prefix `/topic`을 설정하세요.
     }
 
     private fun allowedOrigins(): Array<String> =
