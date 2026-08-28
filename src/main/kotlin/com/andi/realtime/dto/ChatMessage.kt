@@ -1,4 +1,4 @@
-package com.andi.rest_crud.dto
+package com.andi.realtime.dto
 
 data class ChatMessage(
     val sender: String,

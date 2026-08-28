@@ -1,4 +1,4 @@
-package com.andi.rest_crud.config
+package com.andi.realtime.config
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
