@@ -33,6 +33,10 @@ CONNECT /ws-chat
 
 Spring simple broker는 `SUBSCRIBE` frame에 STOMP `RECEIPT`를 보내지 않습니다. Live Lab의 구독 표시는 frame을 보냈다는 뜻이며, 실제 `MESSAGE` 수신으로 구독 동작을 확인합니다.
 
+## Swagger와 Live Lab
+
+`/swagger`는 세 STOMP 경로와 `ChatMessage(sender, content)` 구조를 읽는 명세 화면입니다. STOMP destination은 HTTP API가 아니므로 Try it out은 비활성화합니다. 실제 CONNECT, SUBSCRIBE, SEND, RECEIVE는 `/realtime-demo.html`에서 실험합니다.
+
 ## 실습 범위
 
 포함:

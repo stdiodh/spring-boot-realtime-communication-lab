@@ -28,6 +28,8 @@ CONNECT -> SUBSCRIBE -> SEND -> @MessageMapping -> TOPIC BROADCAST -> RECEIVE ->
 
 Live Lab 소스는 [realtime-demo.html](./src/main/resources/static/realtime-demo.html)입니다. Spring Boot가 직접 제공하며 SockJS, CDN, 별도 프론트엔드 서버를 사용하지 않습니다.
 
+`http://localhost:8080/swagger`에서는 `/ws-chat`, `/app/chat.send`, `/topic/chat`과 `ChatMessage(sender, content)` 계약을 읽을 수 있습니다. Swagger는 STOMP 경로를 설명하는 읽기 전용 명세이며 Try it out은 비활성화되어 있습니다. 실제 연결·구독·전송은 Live Lab에서 확인합니다.
+
 ## 테스트
 
 starter에서는 TODO를 완성하기 전 관련 테스트만 실패하는 것이 정상입니다. Docker나 외부 서비스는 필요하지 않습니다.

@@ -2,5 +2,15 @@ spring:
   application:
     name: spring-boot-realtime-communication-lab
 
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger
+    url: /openapi/realtime.yaml
+    disable-swagger-default-url: true
+    supported-submit-methods: []
+
 app:
   websocket-allowed-origin-patterns: ${APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS:http://localhost:*}

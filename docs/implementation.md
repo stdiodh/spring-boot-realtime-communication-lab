@@ -38,6 +38,8 @@ DB 저장, 채팅방 분기, 인증 로직을 추가하지 않습니다.
 
 Windows CMD는 `gradlew.bat`, PowerShell은 `.\gradlew.bat`을 사용합니다. Docker나 별도 프론트엔드 서버는 필요하지 않습니다.
 
+`http://localhost:8080/swagger`는 실제 endpoint, destination, payload를 확인하는 읽기 전용 명세입니다. Try it out으로 STOMP를 실행하지 않고 아래 Live Lab에서 검증합니다.
+
 콘솔에 `Tomcat started on port 8080`이 표시된 뒤 브라우저 주소창에 다음 URL을 직접 입력합니다.
 
 ```text
