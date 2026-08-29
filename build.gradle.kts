@@ -21,6 +21,7 @@ repositories {
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-websocket")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("tools.jackson.module:jackson-module-kotlin")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

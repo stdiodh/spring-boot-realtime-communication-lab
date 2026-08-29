@@ -46,3 +46,5 @@ http://localhost:8080/realtime-demo.html
 ```
 
 Client A와 B를 연결·구독하고 A의 메시지를 두 client가 받는지 확인합니다. GitHub에서는 [Live Lab 소스](../src/main/resources/static/realtime-demo.html)만 볼 수 있으며, 실제 실험에는 실행 중인 Spring Boot 서버가 필요합니다. Docker나 별도 프론트엔드 서버는 필요하지 않습니다.
+
+`http://localhost:8080/swagger`는 실제 endpoint, destination, payload를 읽기 전용으로 확인하는 보조 자료입니다. Try it out은 비활성화되어 있으므로 STOMP 실행 검증은 Live Lab에서 진행합니다.

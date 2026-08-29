@@ -13,6 +13,7 @@
 - [ ] context와 controller 테스트가 통과합니다.
 - [ ] 두 native WebSocket/STOMP session이 같은 메시지를 받습니다.
 - [ ] Live Lab의 두 client와 세 destination 계약을 확인합니다.
+- [ ] 정적 OpenAPI 명세가 `/ws-chat`, `/app/chat.send`, `/topic/chat`, `sender`, `content`를 설명합니다.
 
 ## 브라우저
 
@@ -21,6 +22,7 @@
 - [ ] A가 `/app/chat.send`로 보낸 메시지를 A와 B가 받습니다.
 - [ ] B를 Unsubscribe한 뒤에는 A만 다음 메시지를 받습니다.
 - [ ] Disconnect 후 Send가 비활성화됩니다.
+- [ ] `/swagger`는 읽기 전용이고 실제 STOMP 실험은 Live Lab에서 수행함을 확인합니다.
 
 ## 범위
 

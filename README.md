@@ -14,6 +14,7 @@ CONNECT → SUBSCRIBE → SEND → @MessageMapping → TOPIC BROADCAST → RECEI
 | `src/main/kotlin/com/andi/realtime/controller/WebSocketController.kt` | `/chat.send` 메시지를 `/topic/chat`으로 broadcast |
 | `src/main/kotlin/com/andi/realtime/dto/ChatMessage.kt` | `sender`, `content` payload |
 | `src/main/resources/static/realtime-demo.html` | Client A/B Live Lab |
+| `src/main/resources/static/openapi/realtime.yaml` | 읽기 전용 WebSocket/STOMP 계약 |
 
 ## 실행
 
@@ -35,6 +36,8 @@ http://localhost:8080/realtime-demo.html
 ```
 
 GitHub에서 파일 내용만 확인하려면 [realtime-demo.html](./src/main/resources/static/realtime-demo.html)을 엽니다. GitHub의 파일 링크는 로컬 Spring Boot 서버를 실행하지 않습니다.
+
+`http://localhost:8080/swagger`에서는 endpoint, destination, payload 명세를 읽을 수 있습니다. STOMP는 HTTP API가 아니므로 Swagger의 Try it out은 비활성화되어 있으며, 실제 연결과 메시지 실험은 Live Lab에서 진행합니다.
 
 ## Live Lab
 
